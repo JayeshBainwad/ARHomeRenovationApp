@@ -3,3 +3,11 @@
 
     <style name="Theme.ARHomeRenovat" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>
+
+
+<!--<resources xmlns:tools="http://schemas.android.com/tools">-->
+<!--<style name="Theme.ARHomeRenovat.NoActionBar" parent="android:Theme.Material.NoActionBar">-->
+<!--    <item name="android:windowFullscreen">false</item>-->
+<!--    <item name="android:windowNoTitle">true</item>-->
+<!--</style>-->
+<!--</resources>-->

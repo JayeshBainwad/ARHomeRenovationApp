@@ -15,6 +15,7 @@ import io.github.sceneview.ar.arcore.rotation
 import io.github.sceneview.ar.node.ArModelNode
 import io.github.sceneview.math.Position
 import io.github.sceneview.math.Rotation
+import io.github.sceneview.math.Scale
 
 private const val TAG = "ARDepthScreen"
 
@@ -41,6 +42,14 @@ fun ARDepthEstimationScreen(modelFileName: String) {
                         this.anchor = anchor
                         this.position = Position(pose.position)
                         this.rotation = Rotation(pose.rotation)
+
+                        // 🔹 Correct Scaling Logic
+                        this.scale = when (modelFileName) {
+                            "android robot.glb" -> Scale(1.0f)   // Normal scale
+                            "Black Chair.glb", "White Chair.glb" -> Scale(0.3f)  // Reduce oversized models
+                            "Brown Table 1.glb", "Brown Table 2.glb" -> Scale(0.3f)
+                            else -> Scale(0.2f)  // Default scale for unknown models
+                        }
 
                         loadModelGlbAsync(
                             modelFileName, // 🔹 Dynamic model loading

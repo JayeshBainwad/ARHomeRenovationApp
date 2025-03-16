@@ -113,7 +113,7 @@ fun HomeScreen(
         drawerContent = {
             Column(
                 modifier = Modifier
-                    .padding(top = 20.dp)
+                    .padding(top = 44.dp)
                     .clip(RoundedCornerShape(topEnd = 16.dp, bottomEnd = 16.dp)),
             ) {
                 Box(modifier = Modifier
@@ -174,15 +174,14 @@ fun HomeScreen(
         },
         content = {
             Scaffold(
-                modifier = Modifier
+                modifier = modifier
                     .graphicsLayer(
                     translationX = drawerOffsetPx,
-                    alpha = if (drawerState.isOpen) 0.5f else 1f
+                    alpha = if (drawerState.isOpen) 0.7f else 1f
                     ),
                 snackbarHost = { SnackbarHost(
                     hostState = snackbarHostState,
                     modifier = modifier
-                        .background(color = MaterialTheme.colorScheme.background)
                 ) },
                 topBar = {
                     TopAppBar(
@@ -197,19 +196,20 @@ fun HomeScreen(
                             }
                         }
                     )
-                }
-            ) { paddingValues ->
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3), // Grid with 3 columns
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                ) {
-                    items(models) { model ->
-                        ModelItem(model = model, onClick = { onModelSelected(model.modelFileName) })
+                },
+                content = { paddingValues ->
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(3), // Grid with 3 columns
+                        modifier = modifier
+                            .fillMaxSize()
+                            .padding(paddingValues)
+                    ) {
+                        items(models) { model ->
+                            ModelItem(model = model, onClick = { onModelSelected(model.modelFileName) })
+                        }
                     }
                 }
-            }
+            )
         }
     )
 
