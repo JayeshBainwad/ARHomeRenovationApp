@@ -87,4 +87,8 @@ dependencies {
     implementation(libs.hilt.android)
     implementation ("androidx.hilt:hilt-navigation-compose:1.2.0")
 
+    // Material3
+    implementation(libs.material3)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.material3.material3)
 }
