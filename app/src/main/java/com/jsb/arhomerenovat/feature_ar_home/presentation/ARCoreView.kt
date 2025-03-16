@@ -32,7 +32,7 @@ fun ARCoreView() {
 //                ModelNode(
 //                    // Load it from a binary .glb in the asset files
 //                    modelInstance = modelLoader.createModelInstance(
-//                        assetFileLocation = "assets/androidrobot.glb"
+//                        assetFileLocation = "assets/android robot.glb"
 //                    ),
 //                    scaleToUnits = 1.0f
 //                )
@@ -197,7 +197,7 @@ fun ARCoreView() {
 //                                    hitResult?.let {
 //                                        coroutineScope.launch {
 //                                            modelLoader.loadModelInstance(
-//                                                "assets/androidrobot.glb"
+//                                                "assets/android robot.glb"
 //                                            )
 //                                        }
 ////                                        place3DModel(it.hitPose, this, coroutineScope)
@@ -240,7 +240,7 @@ fun ARCoreView() {
 //// Function to place 3D object at a given pose
 ////private fun place3DModel(pose: Pose, sceneView: ARSceneView, coroutineScope: CoroutineScope) {
 ////    val context = sceneView.context
-////    val modelPath = "models/androidrobot.glb" // Ensure correct asset path
+////    val modelPath = "models/android robot.glb" // Ensure correct asset path
 ////
 ////    coroutineScope.launch(Dispatchers.IO) {
 ////        try {

@@ -1,22 +1,13 @@
-// Using in-build gesture detector
 package com.jsb.arhomerenovat.feature_ar_home.presentation
 
 import android.util.Log
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.DefaultShadowColor
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import io.github.sceneview.ar.ARScene
 import io.github.sceneview.ar.arcore.position
@@ -28,7 +19,7 @@ import io.github.sceneview.math.Rotation
 private const val TAG = "ARDepthScreen"
 
 @Composable
-fun ARDepthEstimationScreen() {
+fun ARDepthEstimationScreen(modelFileName: String) {
     var modelNode: ArModelNode? by remember { mutableStateOf(null) }
     var isModelSelected by remember { mutableStateOf(false) }
     var rotationValue by remember { mutableStateOf(0f) }
@@ -52,7 +43,7 @@ fun ARDepthEstimationScreen() {
                         this.rotation = Rotation(pose.rotation)
 
                         loadModelGlbAsync(
-                            "androidrobot.glb",
+                            modelFileName, // 🔹 Dynamic model loading
                             autoAnimate = true,
                             onLoaded = { Log.d(TAG, "✅ Model loaded successfully!") },
                             onError = { Log.e(TAG, "❌ Model load failed: ${it.localizedMessage}") }
@@ -123,286 +114,6 @@ fun RotationControlBar(
 }
 
 
-
-
-
-
-
-
-
-
-// 2 Finger Rotation Working ✅
-//package com.jsb.arhomerenovat.feature_ar_home.presentation
-//
-//import android.util.Log
-//import android.view.GestureDetector
-//import android.view.MotionEvent
-//import android.view.View
-//import androidx.compose.foundation.layout.fillMaxSize
-//import androidx.compose.runtime.*
-//import androidx.compose.ui.Modifier
-//import androidx.compose.ui.platform.LocalContext
-//import androidx.compose.ui.viewinterop.AndroidView
-//import com.google.ar.core.Config
-//import io.github.sceneview.ar.ARScene
-//import io.github.sceneview.ar.arcore.position
-//import io.github.sceneview.ar.arcore.rotation
-//import io.github.sceneview.ar.node.ArModelNode
-//import io.github.sceneview.math.Position
-//import io.github.sceneview.math.Rotation
-//
-//private const val TAG = "ARDepthScreen"
-//
-//@Composable
-//fun ARDepthEstimationScreen() {
-//    val context = LocalContext.current
-//    var modelNode: ArModelNode? by remember { mutableStateOf(null) }
-//    var isModelSelected by remember { mutableStateOf(false) }
-//    var rotationModeEnabled by remember { mutableStateOf(false) }
-//
-//    // Track last touch position for rotation
-//    var lastTouchX by remember { mutableStateOf(0f) }
-//    var lastTouchY by remember { mutableStateOf(0f) }
-//
-//    // Gesture Detector for Double Tap Detection
-//    val gestureDetector = remember {
-//        GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
-//            override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-//                Log.d(TAG, "👆 Single Tap Confirmed - Ignoring Rotation")
-//                return false
-//            }
-//        }).apply {
-//            setOnDoubleTapListener(object : GestureDetector.OnDoubleTapListener {
-//                override fun onDoubleTap(e: MotionEvent): Boolean {
-//                    Log.d(TAG, "✅ Double Tap Detected - Rotation Mode Enabled!")
-//                    rotationModeEnabled = true
-//                    return true
-//                }
-//
-//                override fun onDoubleTapEvent(e: MotionEvent): Boolean {
-//                    Log.d(TAG, "🟡 Double Tap Event Occurred.")
-//                    return true
-//                }
-//
-//                override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-//                    Log.d(TAG, "👆 Single Tap Confirmed - Ignoring Rotation")
-//                    return false
-//                }
-//            })
-//        }
-//    }
-//
-//// Custom Android View for Gesture Handling
-//    AndroidView(
-//        modifier = Modifier.fillMaxSize(),
-//        factory = { context ->
-//            object : View(context) {
-//                init {
-//                    isFocusable = true
-//                    isClickable = true
-//                    isFocusableInTouchMode = true
-//                }
-//
-//                override fun onTouchEvent(event: MotionEvent): Boolean {
-//                    Log.d(TAG, "📲 Touch event detected: ${event.action}")
-//
-//                    if (!gestureDetector.onTouchEvent(event)) {
-//                        Log.e(TAG, "❗ Gesture Detector NOT triggered.")
-//                    }
-//
-//                    if (rotationModeEnabled) {
-//                        when (event.action) {
-//                            MotionEvent.ACTION_MOVE -> {
-//                                val deltaX = event.rawX * 0.1f
-//                                val deltaY = event.rawY * 0.1f
-//
-//                                modelNode?.rotation = Rotation(
-//                                    y = modelNode!!.rotation.y + deltaX,
-//                                    x = modelNode!!.rotation.x + deltaY
-//                                )
-//
-//                                Log.d(TAG, "🔄 Rotating model: X=${modelNode!!.rotation.x}, Y=${modelNode!!.rotation.y}")
-//                            }
-//
-//                            MotionEvent.ACTION_UP -> {
-//                                rotationModeEnabled = false
-//                                Log.d(TAG, "❌ Rotation mode disabled.")
-//                            }
-//                        }
-//
-//                        return true
-//                    }
-//
-//                    Log.e(TAG, "❌ Rotation failed - No double tap detected yet.")
-//                    return super.onTouchEvent(event)
-//                }
-//
-//                override fun performClick(): Boolean {
-//                    super.performClick()
-//                    Log.d(TAG, "✅ performClick() called for accessibility support")
-//                    return true
-//                }
-//            }
-//        }
-//    )
-
-//    ARScene(
-//        modifier = Modifier.fillMaxSize(),
-//        planeRenderer = true,
-//
-//        onSessionCreate = { session ->
-//            Log.d(TAG, "🔄 Configuring AR Session...")
-//
-//            try {
-//                session.configure(
-//                    Config(session).apply {
-//                        depthMode = if (session.isDepthModeSupported(Config.DepthMode.RAW_DEPTH_ONLY)) {
-//                            Log.d(TAG, "✅ Depth Mode: RAW_DEPTH_ONLY enabled")
-//                            Config.DepthMode.RAW_DEPTH_ONLY
-//                        } else {
-//                            Log.w(TAG, "⚠️ Depth Mode: RAW_DEPTH_ONLY not supported, disabling depth")
-//                            Config.DepthMode.DISABLED
-//                        }
-//
-//                        instantPlacementMode = Config.InstantPlacementMode.DISABLED
-//                        lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
-//                        planeFindingMode = Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL
-//                    }
-//                )
-//                Log.d(TAG, "✅ AR Session configured successfully!")
-//            } catch (e: Exception) {
-//                Log.e(TAG, "❗ AR Session configuration failed: ${e.localizedMessage}")
-//            }
-//        },
-//
-//        onTap = { hitResult ->
-//            if (modelNode == null) {
-//                val pose = hitResult.hitPose
-//                val anchor = hitResult.createAnchor()
-//
-//                modelNode = ArModelNode(this.engine).apply {
-//                    this.anchor = anchor
-//                    this.position = Position(pose.position)
-//                    this.rotation = Rotation(pose.rotation)
-//
-//                    loadModelGlbAsync(
-//                        "androidrobot.glb",
-//                        autoAnimate = true,
-//                        onLoaded = { Log.d(TAG, "✅ Model loaded successfully!") },
-//                        onError = { Log.e(TAG, "❌ Model load failed: ${it.localizedMessage}") }
-//                    )
-//                    // 🔄 Handle Double Tap for Rotation (Correctly Placed Here)
-//                    onDoubleTapEvent = listOf { event ->
-//                        val rotationAmount = event.motionEvent.x * 0.2f  // Adjust for sensitivity
-//                        this.rotation = Rotation(y = this.rotation.y + rotationAmount)
-//
-//                        Log.d(TAG, "🔄 Double Tap Rotation: ${this.rotation.y} degrees")
-//                    }
-//                }
-//
-//
-//
-//                addChild(modelNode!!)
-//                modelNode?.isScaleEditable = false
-//                isModelSelected = true
-//                Log.d(TAG, "🎯 Model anchored and placed successfully!")
-//
-//            } else {
-//                isModelSelected = !isModelSelected
-//                Log.d(TAG, if (isModelSelected) "✔️ Model selected." else "❌ Model deselected.")
-//            }
-//        }
-//    )
-//
-//
-//}
-
-
-
-
-
-
-
-// 2-finger Rotation ❌
-//@Composable
-//fun ARDepthEstimationScreen() {
-//    val context = LocalContext.current
-//    var modelNode: ArModelNode? by remember { mutableStateOf(null) }
-//    var isModelSelected by remember { mutableStateOf(false) }
-//
-//    // Rotation Gesture Detector for Rotation
-//    val rotateGestureDetector = remember {
-//        RotateGestureDetector(context, object : RotateGestureDetector.OnRotateListener {
-//            override fun onRotate(rotationDegrees: Float): Boolean {
-//                if (isModelSelected && modelNode != null) {
-//                    val newRotationY = modelNode!!.rotation.y + rotationDegrees
-//                    modelNode!!.rotation = Rotation(y = newRotationY)
-//                    Log.d(TAG, "🔄 Rotating model: $newRotationY degrees")
-//                }
-//                return true
-//            }
-//        })
-//    }
-//
-//    AndroidView(
-//        modifier = Modifier.fillMaxSize(),
-//        factory = { context ->
-//            object : View(context) {
-//                override fun onTouchEvent(event: MotionEvent): Boolean {
-//                    try {
-//                        rotateGestureDetector.onTouchEvent(event)
-//                        if (event.action == MotionEvent.ACTION_UP) {
-//                            performClick()
-//                        }
-//                    } catch (e: Exception) {
-//                        Log.e(TAG, "❗ Touch Event Error: ${e.localizedMessage}", e)
-//                    }
-//                    return true
-//                }
-//
-//                override fun performClick(): Boolean {
-//                    super.performClick()
-//                    Log.d(TAG, "✅ performClick() called for accessibility support")
-//                    return true
-//                }
-//            }
-//        }
-//    )
-//
-//    ARScene(
-//        modifier = Modifier.fillMaxSize(),
-//        planeRenderer = true,
-//
-//        // Handle Tap (for Model Selection)
-//        onTap = { hitResult ->
-//            if (modelNode == null) {
-//                val pose = hitResult.hitPose
-//                val anchor = hitResult.createAnchor()
-//
-//                modelNode = ArModelNode(this.engine).apply {
-//                    this.anchor = anchor
-//                    this.position = Position(pose.position)
-//                    this.rotation = Rotation(pose.rotation)
-//
-//                    loadModelGlbAsync(
-//                        "androidrobot.glb",
-//                        autoAnimate = true,
-//                        onLoaded = { Log.d(TAG, "✅ Model loaded successfully!") },
-//                        onError = { Log.e(TAG, "❌ Model load failed: ${it.localizedMessage}") }
-//                    )
-//                }
-//
-//                addChild(modelNode!!)
-//                modelNode?.isScaleEditable = false
-//                isModelSelected = true
-//                Log.d(TAG, "🎯 Model anchored and placed successfully!")
-//            } else {
-//                isModelSelected = !isModelSelected
-//                Log.d(TAG, if (isModelSelected) "✔️ Model selected." else "❌ Model deselected.")
-//            }
-//        }
-//    )
-//}
 
 
 
@@ -482,7 +193,7 @@ fun RotationControlBar(
 //                        this.rotation = Rotation(hitResult.hitPose.rotation)
 //
 //                        loadModelGlbAsync(
-//                            "androidrobot.glb",
+//                            "android robot.glb",
 //                            autoAnimate = true,
 //                            onLoaded = { Log.d(TAG, "✅ Model loaded successfully!") },
 //                            onError = { Log.e(TAG, "❌ Model load failed: ${it.localizedMessage}") }
@@ -640,7 +351,7 @@ fun RotationControlBar(
 //                        rotation = Rotation(hitResult.hitPose.rotation) // Maintain rotation
 //
 //                        // ✅ Load the 3D model (Android robot) asynchronously
-//                        loadModelGlbAsync("androidrobot.glb", autoAnimate = true,
+//                        loadModelGlbAsync("android robot.glb", autoAnimate = true,
 //                            onError = { Log.e(TAG, "❌ Model load failed: ${it.localizedMessage}") },
 //                            onLoaded = { Log.d(TAG, "✅ Model loaded successfully.") }
 //                        )

@@ -22,18 +22,18 @@ class MainActivity : ComponentActivity() {
 
             val navController = rememberNavController()
 
-            NavHost(
-                navController = navController,
-                startDestination = "home_screen"
-            ) {
+            NavHost(navController, startDestination = "home_screen") {
                 composable("home_screen") {
-                    HomeScreen(navController)
+                    HomeScreen(navController) { selectedModel ->
+                        navController.navigate("ar_depth_screen/$selectedModel")
+                    }
                 }
-                composable("ar_depth_screen") {
-                    ARDepthEstimationScreen()
+
+                composable("ar_depth_screen/{modelFileName}") { backStackEntry ->
+                    val modelFileName = backStackEntry.arguments?.getString("modelFileName") ?: ""
+                    ARDepthEstimationScreen(modelFileName)
                 }
             }
-
         }
     }
 }
