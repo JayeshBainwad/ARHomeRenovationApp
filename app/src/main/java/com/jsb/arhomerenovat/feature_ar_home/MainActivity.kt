@@ -23,21 +23,24 @@ import com.jsb.arhomerenovat.feature_ar_home.presentation.HomeScreen
 import com.jsb.arhomerenovat.feature_ar_home.presentation.ProfileScreen
 import com.jsb.arhomerenovat.feature_ar_home.presentation.SavedLayoutsScreen
 import com.jsb.arhomerenovat.ui.theme.ARHomeRenovatTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            ARHomeRenovatTheme { // ✅ Wrap your UI in the theme
+            ARHomeRenovatTheme {
                 val navController = rememberNavController()
-                val modifier = Modifier
 
                 NavHost(navController, startDestination = "home_screen") {
 
                     composable("home_screen") {
-                        HomeScreen(modifier.background(color = MaterialTheme.colorScheme.background), navController) { selectedModel ->
+                        HomeScreen(
+                            modifier = Modifier.background(color = MaterialTheme.colorScheme.background),
+                            navController
+                        ) { selectedModel ->
                             navController.navigate("ar_depth_screen/$selectedModel")
                         }
                     }
@@ -46,6 +49,7 @@ class MainActivity : ComponentActivity() {
                         val modelFileName = backStackEntry.arguments?.getString("modelFileName") ?: ""
                         ARDepthEstimationScreen(modelFileName)
                     }
+
 
                     composable("saved_layouts_screen") {
                         SavedLayoutsScreen()
@@ -59,3 +63,5 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+

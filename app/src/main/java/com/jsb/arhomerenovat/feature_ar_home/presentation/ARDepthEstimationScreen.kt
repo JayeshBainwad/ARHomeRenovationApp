@@ -1,89 +1,241 @@
 package com.jsb.arhomerenovat.feature_ar_home.presentation
 
 import android.util.Log
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.runtime.*
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.jsb.arhomerenovat.feature_ar_home.domain.ModelData
+import com.jsb.arhomerenovat.feature_ar_home.presentation.util.getPngImageForModel
 import io.github.sceneview.ar.ARScene
+import io.github.sceneview.ar.ArSceneView
 import io.github.sceneview.ar.arcore.position
 import io.github.sceneview.ar.arcore.rotation
 import io.github.sceneview.ar.node.ArModelNode
 import io.github.sceneview.math.Position
 import io.github.sceneview.math.Rotation
-import io.github.sceneview.math.Scale
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 private const val TAG = "ARDepthScreen"
+private var rotationJob: Job? = null  // Coroutine for smooth rotation
+private var isRotationActive = false  // Tracks rotation state
+private var isWaitingForToggle = false // Prevents rapid toggling
 
 @Composable
-fun ARDepthEstimationScreen(modelFileName: String) {
-    var modelNode: ArModelNode? by remember { mutableStateOf(null) }
-    var isModelSelected by remember { mutableStateOf(false) }
-    var rotationValue by remember { mutableStateOf(0f) }
+fun ARDepthEstimationScreen(
+    initialModelFileName: String,
+    viewModel: ARDepthEstimationViewModel = hiltViewModel()
+) {
+    var selectedModel by remember { mutableStateOf(initialModelFileName) }
+    var activeModelNode by remember { mutableStateOf<ArModelNode?>(null) } // Tracks selected model node
+    var showModelSelectionSheet by remember { mutableStateOf(false) }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        val arSceneView = remember { mutableStateOf<ArSceneView?>(null) }
+
         ARScene(
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             planeRenderer = true,
-            onTap = { hitResult ->
-                if (modelNode == null) {
-                    val pose = hitResult.hitPose
-                    val anchor = hitResult.createAnchor()
+            onCreate = { sceneView ->
+                arSceneView.value = sceneView
+                Log.d(TAG, "✅ ARScene created successfully")
+            },
 
-                    modelNode = ArModelNode(this.engine).apply {
-                        this.anchor = anchor
-                        this.position = Position(pose.position)
-                        this.rotation = Rotation(pose.rotation)
 
-                        // 🔹 Correct Scaling Logic
-                        this.scale = when (modelFileName) {
-                            "android robot.glb" -> Scale(1.0f)   // Normal scale
-                            "Black Chair.glb", "White Chair.glb" -> Scale(0.3f)  // Reduce oversized models
-                            "Brown Table 1.glb", "Brown Table 2.glb" -> Scale(0.3f)
-                            else -> Scale(0.2f)  // Default scale for unknown models
+        onTap = { hitResult ->
+            val pose = hitResult.hitPose
+            val anchor = hitResult.createAnchor()
+
+            arSceneView.value?.let { sceneView ->
+                val modelNode = ArModelNode(sceneView.engine).apply {
+                    loadModelGlbAsync(
+                        glbFileLocation = selectedModel,
+                        scaleToUnits = 0.2f,
+                        onLoaded = {
+                            Log.d(TAG, "✅ Model loaded successfully: $selectedModel")
+                            this.anchor = anchor
+                            this.isVisible = true
+                            this.rotation = Rotation(pose.rotation)
+                            this.position = Position(pose.position)
+                        },
+                        onError = { error ->
+                            Log.e(TAG, "❌ Error loading model: ${error.message}")
+                        }
+                    )
+
+
+
+                    onDoubleTapEvent = listOf {
+                        if (isWaitingForToggle) return@listOf // Ignore rapid successive taps
+
+                        isWaitingForToggle = true
+                        CoroutineScope(Dispatchers.Main).launch {
+                            delay(300) // Buffer to prevent double activation
+                            isWaitingForToggle = false
                         }
 
-                        loadModelGlbAsync(
-                            modelFileName, // 🔹 Dynamic model loading
-                            autoAnimate = true,
-                            onLoaded = { Log.d(TAG, "✅ Model loaded successfully!") },
-                            onError = { Log.e(TAG, "❌ Model load failed: ${it.localizedMessage}") }
-                        )
+                        if (!isRotationActive) {
+                            Log.d(TAG, "▶️ Rotation Enabled")
+
+                            isRotationActive = true
+                            this.isScaleEditable = false
+                            this.isEditable = false
+                            this.isRotationEditable = true
+
+                            rotationJob?.cancel()  // Stop any active rotation job
+                            rotationJob = CoroutineScope(Dispatchers.Default).launch {
+                                while (isActive && isRotationActive) {
+                                    arSceneView.value?.hitTest(
+                                        position = hitResult.hitPose.position,
+                                        plane = true,
+                                        depth = true,
+                                        instant = true
+                                    )?.let { hitResult ->
+                                        val newPose = hitResult.hitPose
+                                        this@apply.rotation = Rotation(y = newPose.rotation.y)
+                                        Log.d(TAG, "🔄 Rotating... ${this@apply.rotation.y} degrees")
+                                    }
+                                    delay(50) // Controls rotation speed
+                                }
+                            }
+                        } else {
+                            Log.d(TAG, "⏹️ Rotation Disabled")
+
+                            isRotationActive = false
+                            this.isScaleEditable = true
+                            this.isEditable = true
+                            this.isRotationEditable = false
+
+                            rotationJob?.cancel()  // Stop the rotation job
+                        }
                     }
 
-                    addChild(modelNode!!)
-                    modelNode?.isPositionEditable = true
-                    modelNode?.isRotationEditable = true
-                    modelNode?.isScaleEditable = true
-                    isModelSelected = true
-                    Log.d(TAG, "🎯 Model anchored and placed successfully!")
-                } else {
-                    isModelSelected = !isModelSelected
-                    Log.d(TAG, if (isModelSelected) "✔️ Model selected." else "❌ Model deselected.")
                 }
+
+                modelNode.isEditable = true
+                modelNode.isSelectable = true
+                modelNode.isScaleEditable = true
+                modelNode.isRotationEditable = false  // Rotation enabled only via double tap
+                activeModelNode = modelNode
+                sceneView.addChild(modelNode)
+                viewModel.addModelToList(modelNode)
+                Log.d(TAG, "✅ Model added to AR scene")
             }
+        }
+
         )
 
-        // 🔄 Rotation Control Bar - Overlay on Camera Feed
-        RotationControlBar(
+        Button(
+            onClick = { showModelSelectionSheet = true },
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp),
-            rotationValue = rotationValue,
-            onRotationChange = { newRotation ->
-                rotationValue = newRotation
-                modelNode?.rotation = Rotation(y = rotationValue)
-                Log.d(TAG, "🔄 Rotation Bar Value: $rotationValue")
+                .align(Alignment.BottomStart)
+                .padding(16.dp)
+        ) {
+            Text("Add Model")
+        }
+
+        Button(
+            onClick = {
+                viewModel.saveCurrentLayout()
+                Log.d(TAG, "💾 Layout saved with ${viewModel.savedModels.value.size} models")
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+        ) {
+            Text("Save Layout")
+        }
+
+        if (showModelSelectionSheet) {
+            ModelSelectionBottomSheet(
+                onModelSelected = { selectedModelName ->
+                    selectedModel = selectedModelName
+                    viewModel.selectedModel(selectedModelName)
+                    Log.d(TAG, "✅ Model selected from BottomSheet: $selectedModelName")
+                    showModelSelectionSheet = false
+                },
+                onDismiss = { showModelSelectionSheet = false }
+            )
+        }
+    }
+}
+
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ModelSelectionBottomSheet(
+    onModelSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val models = listOf(
+        ModelData(getPngImageForModel("android robot.glb"), "android robot.glb"),
+        ModelData(getPngImageForModel("Black Chair.glb"), "Black Chair.glb"),
+        ModelData(getPngImageForModel("White Chair.glb"), "White Chair.glb"),
+        ModelData(getPngImageForModel("Gray Chair.glb"), "Gray Chair.glb"),
+        ModelData(getPngImageForModel("Brown Table 1.glb"), "Brown Table 1.glb"),
+        ModelData(getPngImageForModel("Brown Table 2.glb"), "Brown Table 2.glb"),
+        ModelData(getPngImageForModel("White Table.glb"), "White Table.glb"),
+        ModelData(getPngImageForModel("Red Couch.glb"), "Red Couch.glb"),
+        ModelData(getPngImageForModel("Brown Couch.glb"), "Brown Couch.glb"),
+        ModelData(getPngImageForModel("White Couch.glb"), "White Couch.glb")
+    )
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Select a 3D Model", style = MaterialTheme.typography.headlineSmall)
+            Spacer(modifier = Modifier.height(12.dp))
+
+            models.forEach { model ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                        .clickable { onModelSelected(model.modelFileName) }
+                ) {
+                    Icon(
+                        painter = painterResource(id = model.imageResId),
+                        contentDescription = model.modelFileName,
+                        modifier = Modifier.size(40.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(model.modelFileName)
+                }
             }
-        )
+        }
     }
 }
 
@@ -93,24 +245,14 @@ fun RotationControlBar(
     rotationValue: Float,
     onRotationChange: (Float) -> Unit
 ) {
-    var initialOffset by remember { mutableStateOf(0f) }  // 🔒 Prevent sudden jump
-
     Slider(
         value = rotationValue,
         onValueChange = { newRotation ->
-            if (initialOffset == 0f) {
-                // ✅ Set the initialOffset only when touched for the first time
-                initialOffset = newRotation
-            }
-
-            val adjustedRotation = newRotation - initialOffset
-            onRotationChange(adjustedRotation)  // 🔄 Smooth rotation logic
+            // Normalize rotation to stay between 0° - 360°
+            val normalizedRotation = ((newRotation % 360) + 360) % 360
+            onRotationChange(normalizedRotation)
         },
-        onValueChangeFinished = {
-            // ✅ Reset initialOffset when user releases touch
-            initialOffset = 0f
-        },
-        valueRange = -450f..450f,
+        valueRange = 0f..360f,
         modifier = modifier
             .fillMaxWidth(0.75f)
             .padding(horizontal = 16.dp),
@@ -121,6 +263,10 @@ fun RotationControlBar(
         )
     )
 }
+
+
+
+
 
 
 

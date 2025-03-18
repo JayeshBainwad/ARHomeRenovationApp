@@ -47,6 +47,7 @@ import com.jsb.arhomerenovat.R
 import com.jsb.arhomerenovat.feature_ar_home.domain.ModelData
 import com.jsb.arhomerenovat.feature_ar_home.drawer.DrawerScreen
 import com.jsb.arhomerenovat.feature_ar_home.drawer.MenuItem
+import com.jsb.arhomerenovat.feature_ar_home.presentation.util.getPngImageForModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -58,17 +59,18 @@ fun HomeScreen(
     onModelSelected: (String) -> Unit
 ) {
     val models = listOf(
-        ModelData(R.drawable.android_robot, "android robot.glb"),
-        ModelData(R.drawable.black_chair, "Black Chair.glb"),
-        ModelData(R.drawable.white_chair, "White Chair.glb"),
-        ModelData(R.drawable.gray_chair, "Gray Chair.glb"),
-        ModelData(R.drawable.brown_table_1, "Brown Table 1.glb"),
-        ModelData(R.drawable.brown_table_2, "Brown Table 2.glb"),
-        ModelData(R.drawable.white_table, "White Table.glb"),
-        ModelData(R.drawable.red_couch, "Red Couch.glb"),
-        ModelData(R.drawable.brown_couch, "Brown Couch.glb"),
-        ModelData(R.drawable.white_couch, "White Couch.glb")
+        ModelData(getPngImageForModel("android robot.glb"), "android robot.glb"),
+        ModelData(getPngImageForModel("Black Chair.glb"), "Black Chair.glb"),
+        ModelData(getPngImageForModel("White Chair.glb"), "White Chair.glb"),
+        ModelData(getPngImageForModel("Gray Chair.glb"), "Gray Chair.glb"),
+        ModelData(getPngImageForModel("Brown Table 1.glb"), "Brown Table 1.glb"),
+        ModelData(getPngImageForModel("Brown Table 2.glb"), "Brown Table 2.glb"),
+        ModelData(getPngImageForModel("White Table.glb"), "White Table.glb"),
+        ModelData(getPngImageForModel("Red Couch.glb"), "Red Couch.glb"),
+        ModelData(getPngImageForModel("Brown Couch.glb"), "Brown Couch.glb"),
+        ModelData(getPngImageForModel("White Couch.glb"), "White Couch.glb")
     )
+
 //    val state = viewModel.state.value
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember {
