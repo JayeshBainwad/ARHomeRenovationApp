@@ -85,21 +85,19 @@ fun HomeScreen(
             MenuItem(
                 title = "3D Models",
                 isSelected = true,
-                iconResId = R.drawable.menu_book_, // ✅ Vector Asset in `drawable`
+                iconResId = R.drawable.menu_book_, // ✅ Vector Asset in drawable
                 description = "Display all 3D models"
             ),
             MenuItem(
-                title = "Profile",
-                isSelected = false,
-                iconResId = R.drawable.profile, // ✅ Vector Asset in `drawable`
-                description = "Open Profile Page"
+                title = "Saved Layouts",
+                iconResId = R.drawable.menu_book_, // ✅ Vector Asset in drawable
+                description = "Display all saved layouts"
             ),
             MenuItem(
-                title = "Saved Layouts",
-                isSelected = false,
-                iconResId = R.drawable.menu_book_, // ✅ Vector Asset in `drawable`
-                description = "Display all saved layouts"
-            )
+                title = "Profile",
+                iconResId = R.drawable.profile, // ✅ Vector Asset in drawable
+                description = "Open Profile Page"
+            ),
         )
     }
     // Calculate offset based on drawer's state
@@ -178,8 +176,8 @@ fun HomeScreen(
             Scaffold(
                 modifier = modifier
                     .graphicsLayer(
-                    translationX = drawerOffsetPx,
-                    alpha = if (drawerState.isOpen) 0.7f else 1f
+                        translationX = drawerOffsetPx,
+                        alpha = if (drawerState.isOpen) 0.7f else 1f
                     ),
                 snackbarHost = { SnackbarHost(
                     hostState = snackbarHostState,
@@ -207,7 +205,12 @@ fun HomeScreen(
                             .padding(paddingValues)
                     ) {
                         items(models) { model ->
-                            ModelItem(model = model, onClick = { onModelSelected(model.modelFileName) })
+                            ModelItem(model = model, onClick = {
+                                scope.launch {
+                                    drawerState.close()
+                                }
+                                onModelSelected(model.modelFileName)
+                            })
                         }
                     }
                 }
@@ -237,4 +240,3 @@ fun ModelItem(model: ModelData, onClick: () -> Unit) {
         )
     }
 }
-

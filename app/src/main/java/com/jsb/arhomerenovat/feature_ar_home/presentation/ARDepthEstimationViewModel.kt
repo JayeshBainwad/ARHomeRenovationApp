@@ -2,126 +2,126 @@ package com.jsb.arhomerenovat.feature_ar_home.presentation
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.jsb.arhomerenovat.feature_ar_home.domain.ModelData
-import io.github.sceneview.ar.node.ArModelNode
+import androidx.lifecycle.viewModelScope
+import com.jsb.arhomerenovat.feature_ar_home.data.local.ModelEntity
+import com.jsb.arhomerenovat.feature_ar_home.domain.repository.ModelRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
-private const val TAG = "ARDepthViewModel"
+private const val TAG = "ARDepthScreen"
 
-class ARDepthEstimationViewModel : ViewModel() {
-
-    // Holds the currently selected model
-    private val _selectedModel = MutableStateFlow<String?>(null)
-    val selectedModel: StateFlow<String?> = _selectedModel
-
-    // List of models currently added to the AR scene
-    private val _addedModels = MutableStateFlow<List<ArModelNode>>(emptyList())
-    val addedModels: StateFlow<List<ArModelNode>> = _addedModels
-
-    // List of saved models (for saving layout functionality)
-    private val _savedModels = MutableStateFlow<List<ArModelNode>>(emptyList())
-    val savedModels: StateFlow<List<ArModelNode>> = _savedModels
-
-    // Track rotation value for each model
-    private val modelRotations = mutableMapOf<ArModelNode, Float>()
-
-    private val _selectedModelNode = MutableStateFlow<ArModelNode?>(null)
-    val selectedModelNode: StateFlow<ArModelNode?> = _selectedModelNode
+@HiltViewModel
+class ARDepthEstimationViewModel @Inject constructor(
+    private val repository: ModelRepository
+) : ViewModel() {
 
     /**
-     * Selects a specific model for rotation
+     * Flow that holds all saved geo models and automatically updates the UI
+     * when data changes in the database.
      */
-    fun selectModelForRotation(modelNode: ArModelNode) {
-        _selectedModelNode.value = modelNode
-        Log.d(TAG, "🎯 Selected model for rotation: ${modelNode.name}")
+    val savedGeoModels = repository.getAllGeoModels() // Property "savedGeoModels" is never used
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // Holds the currently selected model's file name (if any)
+    private val _selectedGeoModel = MutableStateFlow<String?>(null)
+
+    /**
+     * Sets the selected geo model and logs the selection.
+     */
+    fun selectedGeoModel(modelFileName: String) {
+        _selectedGeoModel.value = modelFileName
+        Log.d(TAG, "✅ Model selected: $modelFileName")
     }
 
     /**
-     * Updates the rotation of the selected model
+     * Saves a new geospatial model to the database with its position & orientation.
+     * Ensures validation before inserting into Room database.
      */
-    fun updateSelectedModelRotation(newRotation: Float) {
-        _selectedModelNode.value?.let { modelNode ->
-            modelNode.modelRotation = modelNode.modelRotation.copy(y = newRotation)
-            Log.d(TAG, "🔄 Rotation applied to selected model: ${modelNode.name} - ${newRotation}°")
+    fun saveGeoModelToDatabase(
+        modelName: String,
+        posX: Float,
+        posY: Float,
+        posZ: Float,
+        qx: Float,
+        qy: Float,
+        qz: Float,
+        qw: Float,
+        latitude: Double,
+        longitude: Double,
+        altitude: Double
+    ) {
+        viewModelScope.launch {
+            try {
+                // Validation checks
+                require(modelName.isNotBlank()) { "Model name cannot be empty!" }
+                require(latitude in -90.0..90.0) { "Invalid latitude value!" }
+                require(longitude in -180.0..180.0) { "Invalid longitude value!" }
+
+                val modelEntity = ModelEntity(
+                    modelName = modelName,
+                    posX = posX,
+                    posY = posY,
+                    posZ = posZ,
+                    qx = qx,
+                    qy = qy,
+                    qz = qz,
+                    qw = qw,
+                    latitude = latitude,
+                    longitude = longitude,
+                    altitude = altitude
+                )
+
+                Log.d(TAG, "💾 Saving model to DB: $modelEntity")
+                repository.insertGeoModel(modelEntity)
+
+                Log.d(TAG, "✅ Geo Model saved: $modelName at ($latitude, $longitude, $altitude)")
+
+            } catch (e: IllegalArgumentException) {
+                Log.e(TAG, "🚨 Validation error: ${e.message}")
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Error saving geo model: ${e.message}", e)
+            }
         }
     }
 
     /**
-     * Updates the currently selected model's file name
+     * Fetches all saved geo models from the database and provides the result via a callback.
+     * This is useful when we want to manually get the latest data without relying on StateFlow.
      */
-    fun selectedModel(modelFileName: String) {
-        _selectedModel.value = modelFileName
-        Log.d(TAG, "✅ Model selected in ViewModel: $modelFileName")
-    }
+    fun fetchSavedGeoModels(onResult: (List<ModelEntity>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                Log.d(TAG, "🔄 Fetching saved geo models from database...")
 
-    /**
-     * Adds the given model node to the list of added models
-     */
-    fun addModelToList(modelNode: ArModelNode) {
-        _addedModels.update { currentModels -> currentModels + modelNode }
-        modelRotations[modelNode] = 0f // Initialize rotation to 0°
-        Log.d(TAG, "✅ Model added to list: ${modelNode.name}")
-    }
+                val models = repository.getAllGeoModels().first() // Collect first value from Flow
 
-    /**
-     * Updates the rotation value for a specific model
-     */
-    fun updateModelRotation(modelNode: ArModelNode, newRotation: Float) {
-        val currentRotation = modelRotations[modelNode] ?: 0f
-
-        // Calculate delta using quaternion logic to prevent flipping
-        val deltaRotation = getShortestRotationPath(currentRotation, newRotation)
-
-        val updatedRotation = (currentRotation + deltaRotation) % 360f
-        modelRotations[modelNode] = updatedRotation
-
-        // Ensure smooth rotation using Quaternion
-        modelNode.modelRotation = modelNode.modelRotation.copy(y = newRotation)
-
-        Log.d(TAG, "🔄 Smooth Rotation applied: ${updatedRotation}°")
-    }
-
-
-    /**
-     * Calculates the shortest rotation path to prevent sudden jumps.
-     */
-    private fun getShortestRotationPath(currentRotation: Float, targetRotation: Float): Float {
-        val delta = (targetRotation - currentRotation) % 360f
-
-        // Ensure no sudden jump by maintaining shortest path logic
-        return when {
-            delta > 180f -> delta - 360f
-            delta < -180f -> delta + 360f
-            else -> delta
+                Log.d(TAG, "✅ Models fetched: ${models.size} models found.")
+                onResult(models) // Pass the list to the callback
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Error fetching models: ${e.message}")
+                onResult(emptyList()) // Return an empty list on failure
+            }
         }
     }
 
-
     /**
-     * Saves the current layout (stores the list of added models)
+     * Clears all saved geospatial models from the database and logs the action.
      */
-    fun saveCurrentLayout() {
-        _savedModels.value = _addedModels.value.toList()
-        Log.d(TAG, "💾 Layout saved with ${_savedModels.value.size} models")
-    }
-
-    /**
-     * Clears the list of added models
-     */
-    fun clearModels() {
-        _addedModels.value = emptyList()
-        modelRotations.clear()
-        Log.d(TAG, "🗑️ All models cleared from ViewModel")
-    }
-
-    /**
-     * Removes a specific model from the list
-     */
-    fun removeModel(modelNode: ArModelNode) {
-        _addedModels.update { currentModels -> currentModels.filter { it != modelNode } }
-        modelRotations.remove(modelNode)
-        Log.d(TAG, "❌ Model removed: ${modelNode.name}")
+    fun clearGeoModels() {
+        viewModelScope.launch {
+            try {
+                repository.clearAllGeoModels()
+                Log.d(TAG, "🗑️ All geospatial models cleared from Room database")
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Error clearing geo models: ${e.message}", e)
+            }
+        }
     }
 }
