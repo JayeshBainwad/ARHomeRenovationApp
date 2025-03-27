@@ -1,29 +1,24 @@
 package com.jsb.arhomerenovat.feature_ar_home.data.repository
 
-import android.util.Log
+import com.jsb.arhomerenovat.feature_ar_home.data.local.LayoutDao
 import com.jsb.arhomerenovat.feature_ar_home.data.local.ModelDao
+import com.jsb.arhomerenovat.feature_ar_home.data.local.LayoutEntity
 import com.jsb.arhomerenovat.feature_ar_home.data.local.ModelEntity
 import com.jsb.arhomerenovat.feature_ar_home.domain.repository.ModelRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
+import javax.inject.Inject
 
-private const val TAG = "ARDepthScreen"
+class ModelRepositoryImpl @Inject constructor(
+    private val layoutDao: LayoutDao,
+    private val modelDao: ModelDao
+) : ModelRepository {
 
-class ModelRepositoryImpl(private val dao: ModelDao) : ModelRepository {
-
-    override suspend fun insertGeoModel(model: ModelEntity) {
-        Log.d(TAG, "💾 Inserting model: $model")
-        dao.insertGeoModel(model)
-
-        val allModels = dao.getAllGeoModels().first() // Get data immediately
-        Log.d(TAG, "📂 Models after insert: $allModels")
+    override suspend fun saveLayoutWithModels(layoutName: String, models: List<ModelEntity>) {
+        val layoutId = layoutDao.insertLayout(LayoutEntity(layoutName = layoutName)).toInt() // ✅ Convert to String
+        val modelsWithLayoutId = models.map { it.copy(layoutId = layoutId) }
+        modelDao.insertModels(modelsWithLayoutId)
     }
 
-    override fun getAllGeoModels(): Flow<List<ModelEntity>> = dao.getAllGeoModels()
+    override suspend fun getAllLayouts(): List<LayoutEntity> = layoutDao.getAllLayouts()
 
-    override suspend fun deleteGeoModel(model: ModelEntity) = dao.deleteGeoModel(model)
-
-    override suspend fun clearAllGeoModels() = dao.clearAllGeoModels()
+    override suspend fun getModelsByLayout(layoutId: Int): List<ModelEntity> = modelDao.getModelsByLayout(layoutId)
 }
-
-

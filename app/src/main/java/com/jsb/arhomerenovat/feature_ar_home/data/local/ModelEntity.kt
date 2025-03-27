@@ -3,20 +3,15 @@ package com.jsb.arhomerenovat.feature_ar_home.data.local
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "geo_model_table")
+@Entity(tableName = "models")
 data class ModelEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
-    val modelName: String,
-    val posX: Float,
-    val posY: Float,
-    val posZ: Float,
-    val qx: Float,  // ✅ Quaternion X
-    val qy: Float,  // ✅ Quaternion Y
-    val qz: Float,  // ✅ Quaternion Z
-    val qw: Float,  // ✅ Quaternion W
-    val latitude: Double,
-    val longitude: Double,
-    val altitude: Double
+    @PrimaryKey(autoGenerate = true) val modelId: Int = 0, // ✅ Unique ID for model
+    val layoutId: Int, // ✅ Foreign key linking to LayoutEntity
+    val modelName: String, // ✅ Name of 3D model
+    val posX: Float, val posY: Float, val posZ: Float, // ✅ Model Position
+    val qx: Float, val qy: Float, val qz: Float, val qw: Float, // ✅ Rotation as Quaternion
+    val scaleX: Float, val scaleY: Float, val scaleZ: Float, // ✅ Scale
+    val latitude: Double, val longitude: Double, val altitude: Double // ✅ Geospatial Data
 )
+
 

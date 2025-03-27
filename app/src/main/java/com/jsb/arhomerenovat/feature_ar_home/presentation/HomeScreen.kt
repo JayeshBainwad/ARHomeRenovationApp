@@ -103,7 +103,7 @@ fun HomeScreen(
     // Calculate offset based on drawer's state
     val drawerWidth = 320.dp
     val maxOffset = with(LocalDensity.current) { drawerWidth.toPx() }
-    val drawerOffsetPx = drawerState.offset.value + maxOffset
+    val drawerOffsetPx = drawerState.currentOffset + maxOffset
     val context = LocalContext.current
 
     ModalNavigationDrawer(

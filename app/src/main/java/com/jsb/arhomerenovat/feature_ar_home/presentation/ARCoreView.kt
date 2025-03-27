@@ -1,63 +1,68 @@
 package com.jsb.arhomerenovat.feature_ar_home.presentation
-
-import androidx.compose.runtime.Composable
-
-private const val TAG = "ARCoreView"
-
+//
+//import android.util.Log
+//import android.view.MotionEvent
+//import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.*
+//import androidx.compose.ui.Modifier
+//import androidx.compose.ui.platform.LocalContext
+//import com.google.ar.core.*
+//import io.github.sceneview.ar.ARScene
+//import io.github.sceneview.ar.ARSceneView
+//import io.github.sceneview.collision.HitResult
+//import io.github.sceneview.node.ModelNode
+//import io.github.sceneview.rememberEngine
+//import io.github.sceneview.rememberModelLoader
+//import io.github.sceneview.rememberScene
+//
+//private const val TAG = "ARCoreView"
+//
 @Composable
 fun ARCoreView() {
 //    val context = LocalContext.current
 //    val engine = rememberEngine()
 //    val modelLoader = rememberModelLoader(engine)
-//    val materialLoader = rememberMaterialLoader(engine)
 //    val scene = rememberScene(engine)
+//    val arSceneView = remember { mutableStateOf<ARSceneView?>(null) }
 //
 //    ARScene(
 //        modifier = Modifier.fillMaxSize(),
 //        engine = engine,
 //        scene = scene,
 //        modelLoader = modelLoader,
-//        materialLoader = materialLoader,
 //        planeRenderer = true, // ✅ Enables plane detection
 //        sessionConfiguration = { session, config ->
 //            config.depthMode = if (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC))
 //                Config.DepthMode.AUTOMATIC
 //            else Config.DepthMode.DISABLED
-//            config.instantPlacementMode = Config.InstantPlacementMode.LOCAL_Y_UP
-//            config.lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
+//            config.planeFindingMode = Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL
 //        },
-//        childNodes = rememberNodes {
-//            // Add a glTF model
-//            add(
-//                ModelNode(
-//                    // Load it from a binary .glb in the asset files
-//                    modelInstance = modelLoader.createModelInstance(
-//                        assetFileLocation = "assets/android robot.glb"
-//                    ),
-//                    scaleToUnits = 1.0f
-//                )
-//            )
-//            // Add a Cylinder geometry
-//            add(
-//                CylinderNode(
-//                engine = engine,
-//                radius = 0.2f,
-//                height = 2.0f,
-//                // Choose the basic material appearance
-//                materialInstance = materialLoader.createColorInstance(
-//                    color = Color.Blue,
-//                    metallic = 0.5f,
-//                    roughness = 0.2f,
-//                    reflectance = 0.4f
-//                )
-//            ).apply {
-//                // Position it on top of the model and rotate it
-//                transform(
-//                    position = Position(y = 1.0f),
-//                    rotation = Rotation(x = 90.0f)
-//                )
-//            })
-//            // ...See all available nodes in the nodes packagage
+//        onViewCreated = {
+//            arSceneView.value = this // ✅ Store the ARSceneView reference
+//        },
+//        onTouchEvent = { e: MotionEvent, hitResult: HitResult? ->
+//            Log.d(TAG, "Touch event detected: ${e.action}")
+//
+//            arSceneView.value?.let { sceneView ->
+//                if (hitResult != null) {
+//                    Log.d(TAG, "HitResult detected at: ${hitResult.worldPosition}")
+//
+//                    val modelNode = ModelNode(
+//                        modelInstance = modelLoader.createModelInstance(
+//                            assetFileLocation = "android robot.glb"
+//                        ),
+//                        scaleToUnits = 0.3f
+//                    ).apply {
+//                        worldPosition = hitResult.worldPosition // ✅ Set position based on hit result
+//                    }
+//
+//                    sceneView.addChildNode(modelNode) // ✅ Add model to the AR scene
+//                    Log.d(TAG, "Model placed at: ${modelNode.worldPosition}")
+//                } else {
+//                    Log.d(TAG, "HitResult is null")
+//                }
+//            }
+//            true
 //        }
 //    )
 }
@@ -72,7 +77,8 @@ fun ARCoreView() {
 
 
 
-//package com.jsb.arhomerenovat.feature_ar_home.presentation.ui
+
+//package com.jsb.arhomerenovat.feature_ar_home.presentation
 //
 //import android.Manifest
 //import android.content.Context
@@ -92,16 +98,8 @@ fun ARCoreView() {
 //import com.google.ar.core.*
 //import io.github.sceneview.ar.ARSceneView
 //import io.github.sceneview.ar.arcore.ARSession
-//import io.github.sceneview.ar.arcore.position
-//import io.github.sceneview.ar.arcore.rotation
-//import io.github.sceneview.ar.localPosition
-//import io.github.sceneview.ar.localRotation
-//import io.github.sceneview.loaders.ModelLoader
-//import io.github.sceneview.model.ModelInstance
-//import io.github.sceneview.node.ModelNode
 //import io.github.sceneview.rememberEngine
 //import io.github.sceneview.rememberModelLoader
-//import kotlinx.coroutines.CoroutineScope
 //import kotlinx.coroutines.Dispatchers
 //import kotlinx.coroutines.launch
 //
@@ -189,20 +187,20 @@ fun ARCoreView() {
 //                                        lastLogTime = currentTime
 //                                    }
 //
-//                                    // Place 3D model when a plane is found
-//                                    val hitResult = frame.hitTest(
-//                                        pose.qx(),
-//                                        pose.qx()
-//                                    ).firstOrNull()
-//                                    hitResult?.let {
-//                                        coroutineScope.launch {
-//                                            modelLoader.loadModelInstance(
-//                                                "assets/android robot.glb"
-//                                            )
-//                                        }
-////                                        place3DModel(it.hitPose, this, coroutineScope)
-//                                        Log.d(TAG, "Placed 3D Model at: ${it.hitPose.translation.contentToString()}")
-//                                    }
+////                                    // Place 3D model when a plane is found
+////                                    val hitResult = frame.hitTest(
+////                                        pose.qx(),
+////                                        pose.qx()
+////                                    ).firstOrNull()
+////                                    hitResult?.let {
+////                                        coroutineScope.launch {
+////                                            modelLoader.loadModelInstance(
+////                                                "android robot.glb"
+////                                            )
+////                                        }
+//////                                        place3DModel(it.hitPose, this, coroutineScope)
+////                                        Log.d(TAG, "Placed 3D Model at: ${it.hitPose.translation.contentToString()}")
+////                                    }
 //                                }
 //                            }
 //                        }
@@ -235,29 +233,29 @@ fun ARCoreView() {
 //        onResult(null, false)
 //    }
 //}
+
+// Function to place 3D object at a given pose
+// Function to place 3D object at a given pose
+//private fun place3DModel(pose: Pose, sceneView: ARSceneView, coroutineScope: CoroutineScope) {
+//    val context = sceneView.context
+//    val modelPath = "models/android robot.glb" // Ensure correct asset path
 //
-//// Function to place 3D object at a given pose
-//// Function to place 3D object at a given pose
-////private fun place3DModel(pose: Pose, sceneView: ARSceneView, coroutineScope: CoroutineScope) {
-////    val context = sceneView.context
-////    val modelPath = "models/android robot.glb" // Ensure correct asset path
-////
-////    coroutineScope.launch(Dispatchers.IO) {
-////        try {
-////            val modelInstance = ModelLoader.loadModelInstanceAsync(context, modelPath).await() // Asynchronous loading
-////
-////            modelInstance?.let {
-////                val modelNode = ModelNode(it).apply {
-////                    localPosition = pose.position
-////                    localRotation = pose.rotation
-////                }
-////
-////                sceneView.addChildNode(modelNode)
-////                Log.d(TAG, "3D Model placed successfully at: ${pose.translation.contentToString()}")
-////            }
-////        } catch (e: Exception) {
-////            Log.e(TAG, "Error loading 3D model: ${e.localizedMessage}")
-////        }
-////    }
-////}
+//    coroutineScope.launch(Dispatchers.IO) {
+//        try {
+//            val modelInstance = ModelLoader.loadModelInstanceAsync(context, modelPath).await() // Asynchronous loading
+//
+//            modelInstance?.let {
+//                val modelNode = ModelNode(it).apply {
+//                    localPosition = pose.position
+//                    localRotation = pose.rotation
+//                }
+//
+//                sceneView.addChildNode(modelNode)
+//                Log.d(TAG, "3D Model placed successfully at: ${pose.translation.contentToString()}")
+//            }
+//        } catch (e: Exception) {
+//            Log.e(TAG, "Error loading 3D model: ${e.localizedMessage}")
+//        }
+//    }
+//}
 //

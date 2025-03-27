@@ -1,7 +1,7 @@
 [versions]
 agp = "8.5.0"
 kotlin = "2.0.20"
-#coreKtx = "1.12.0"
+coreKtx = "1.12.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.5.0"
@@ -13,6 +13,7 @@ ksp = "2.0.21-1.0.27"
 hilt = "2.48.1"
 uiTestAndroid = "1.7.8"
 material3 = "1.3.1"
+tensorflowLiteMetadata = "0.1.0"
 
 [libraries]
 #androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -35,6 +36,7 @@ hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref
 androidx-ui-test-android = { group = "androidx.compose.ui", name = "ui-test-android", version.ref = "uiTestAndroid" }
 material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 androidx-compose-material3-material3 = { module = "androidx.compose.material3:material3" }
+tensorflow-lite-metadata = { group = "org.tensorflow", name = "tensorflow-lite-metadata", version.ref = "tensorflowLiteMetadata" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

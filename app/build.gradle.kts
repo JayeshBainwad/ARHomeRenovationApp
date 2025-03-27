@@ -41,6 +41,7 @@ android {
     }
     buildFeatures {
         compose = true
+        mlModelBinding = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.1.1"
@@ -48,6 +49,20 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "com/google/flatbuffers/**"
+            excludes += "google/flatbuffers/**"  // Add this
+            excludes += "META-INF/versions/9/module-info.class"  // Add this
+        }
+    }
+    configurations.all {
+        resolutionStrategy {
+            force ("com.google.flatbuffers:flatbuffers-java:25.2.10")
+            // Also force remove any other versions
+            eachDependency { -> // Cannot infer a type for this parameter. Please specify it explicitly.
+                if (this.requested.group == "com.google.flatbuffers") {
+                    this.useVersion ("25.2.10") // Unexpected tokens (use ';' to separate expressions on the same line)
+                }
+            }
         }
     }
 }
@@ -69,6 +84,10 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.ui.test.android)
+    implementation(libs.tensorflow.lite.metadata) {
+        exclude (group = "com.google.flatbuffers")
+        exclude (module = "flatbuffers-java")
+    }
 //    implementation(libs.sceneform.ux)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -78,9 +97,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
-    implementation ("com.google.ar:core:1.47.0") // Ensure latest ARCore version
-    // SceneView for AR
-    implementation ("io.github.sceneview:arsceneview:0.10.0") // Use the latest version
+
 
     implementation ("com.google.android.gms:play-services-location:21.3.0")
 
@@ -126,4 +143,43 @@ dependencies {
     // optional - Paging 3 Integration
     implementation("androidx.room:room-paging:$room_version")
 
+
+    implementation ("com.google.ar:core:1.47.0") {
+        exclude (group = "com.google.flatbuffers")
+        exclude (module = "flatbuffers-java")
+    }
+    // SceneView for AR
+    implementation ("io.github.sceneview:arsceneview:0.10.0") {
+        exclude (group = "com.google.flatbuffers")
+        exclude (module = "flatbuffers-java")
+    }
+//    implementation ("io.github.sceneview:arsceneview:2.2.1") // Use the latest version
+
+    // TensorFlow Lite dependencies
+    // TensorFlow Lite with explicit FlatBuffers version
+    implementation ("org.tensorflow:tensorflow-lite-gpu-api:2.14.0") {
+        exclude (group = "com.google.flatbuffers")
+        exclude (module = "flatbuffers-java")
+    }
+    implementation ("org.tensorflow:tensorflow-lite:2.14.0") {
+        exclude (group = "com.google.flatbuffers")
+        exclude (module = "flatbuffers-java")
+    }
+    implementation ("org.tensorflow:tensorflow-lite-gpu:2.14.0") {
+        exclude (group = "com.google.flatbuffers")
+        exclude (module = "flatbuffers-java")
+    }
+
+    // Manually add the latest FlatBuffers version (compatible with TF Lite)
+//    implementation ("com.google.flatbuffers:flatbuffers-java:25.2.10")
+    implementation ("org.tensorflow:tensorflow-lite-support:0.4.4"){
+        exclude (group = "com.google.flatbuffers")
+        exclude (module = "flatbuffers-java")
+    }
+
+    // CameraX dependencies
+    implementation ("androidx.camera:camera-core:1.1.0")  // Core CameraX
+    implementation ("androidx.camera:camera-camera2:1.1.0") // Camera2 implementation
+    implementation ("androidx.camera:camera-lifecycle:1.1.0") // Lifecycle support for CameraX
+    implementation ("androidx.camera:camera-view:1.4.1") // Optional, for CameraX view
 }

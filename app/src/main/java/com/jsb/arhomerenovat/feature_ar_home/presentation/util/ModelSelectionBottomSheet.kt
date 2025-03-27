@@ -58,7 +58,7 @@ fun ModelSelectionBottomSheet(
                     Icon(
                         painter = painterResource(id = model.imageResId),
                         contentDescription = model.modelFileName,
-                        modifier = Modifier.size(120.dp)
+                        modifier = Modifier.size(40.dp)
                             .clickable { onModelSelected(model.modelFileName)}
                             .align(Alignment.Center)
                     )
