@@ -182,4 +182,14 @@ dependencies {
     implementation ("androidx.camera:camera-camera2:1.1.0") // Camera2 implementation
     implementation ("androidx.camera:camera-lifecycle:1.1.0") // Lifecycle support for CameraX
     implementation ("androidx.camera:camera-view:1.4.1") // Optional, for CameraX view
+
+
+    // Obj - a simple Wavefront OBJ file loader
+    // https://github.com/javagl/Obj
+    implementation ("de.javagl:obj:0.4.0")
+
+    implementation ("com.google.android.material:material:1.1.0")
+
+    implementation ("org.jetbrains.kotlin:kotlin-stdlib:1.9.0")
+    implementation ("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.0")
 }

@@ -6,10 +6,8 @@ import androidx.room.Room
 import com.jsb.arhomerenovat.feature_ar_home.data.local.ModelDatabase
 import com.jsb.arhomerenovat.feature_ar_home.data.repository.ModelRepositoryImpl
 import com.jsb.arhomerenovat.feature_ar_home.domain.repository.ModelRepository
-import com.jsb.arhomerenovat.feature_ar_home.presentation.ARDepthEstimationViewModel
-import com.jsb.arhomerenovat.feature_depth_estimation.data.FrameAnalyser
-import com.jsb.arhomerenovat.feature_depth_estimation.data.MiDASModel
-import com.jsb.arhomerenovat.presentation.PointCloudGenerator
+import com.jsb.arhomerenovat.feature_midas_depth_estimation.data.MiDASModel
+import com.jsb.arhomerenovat.feature_midas_depth_estimation.point_cloud_generator.PointCloudGenerator
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
             ARHomeRenovatTheme {
                 val navController = rememberNavController()
 
-                NavHost(navController = navController, startDestination = "ar_depth_screen") {
+                NavHost(navController = navController, startDestination = "home_screen") {
                     composable("home_screen") {
                         HomeScreen(
                             modifier = Modifier.background(color = MaterialTheme.colorScheme.background),

@@ -1,4 +1,4 @@
-package com.jsb.arhomerenovat.feature_depth_estimation.data.util
+package com.jsb.arhomerenovat.feature_midas_depth_estimation.util
 
 import android.graphics.*
 import android.media.Image

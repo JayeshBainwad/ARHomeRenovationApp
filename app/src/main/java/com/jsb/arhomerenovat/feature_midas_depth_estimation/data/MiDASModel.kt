@@ -1,4 +1,4 @@
-package com.jsb.arhomerenovat.feature_depth_estimation.data
+package com.jsb.arhomerenovat.feature_midas_depth_estimation.data
 
 import android.content.Context
 import android.graphics.Bitmap

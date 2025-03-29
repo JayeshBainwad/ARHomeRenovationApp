@@ -1,11 +1,11 @@
-package com.jsb.arhomerenovat.feature_depth_estimation.data
+package com.jsb.arhomerenovat.feature_midas_depth_estimation.data
 
 import android.graphics.Bitmap
 import androidx.annotation.OptIn
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import com.jsb.arhomerenovat.feature_depth_estimation.data.util.BitmapUtils
+import com.jsb.arhomerenovat.feature_midas_depth_estimation.util.BitmapUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

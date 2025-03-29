@@ -2,17 +2,17 @@ package com.jsb.arhomerenovat.feature_ar_home.presentation
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Matrix
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.ar.core.Frame
 import com.google.ar.core.exceptions.NotYetAvailableException
+import com.jsb.arhomerenovat.feature_ar_home.data.local.ModelEntity
 import com.jsb.arhomerenovat.feature_ar_home.domain.repository.ModelRepository
-import com.jsb.arhomerenovat.feature_depth_estimation.data.IntrinsicParameters
-import com.jsb.arhomerenovat.feature_depth_estimation.data.MiDASModel
-import com.jsb.arhomerenovat.feature_depth_estimation.data.Point3D
-import com.jsb.arhomerenovat.presentation.PointCloudGenerator
+import com.jsb.arhomerenovat.feature_midas_depth_estimation.data.IntrinsicParameters
+import com.jsb.arhomerenovat.feature_midas_depth_estimation.data.MiDASModel
+import com.jsb.arhomerenovat.feature_midas_depth_estimation.data.Point3D
+import com.jsb.arhomerenovat.feature_midas_depth_estimation.point_cloud_generator.PointCloudGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.sceneview.ar.ArSceneView
@@ -51,6 +51,10 @@ class ARDepthEstimationViewModel @Inject constructor(
         cx = 500f,   // Principal point x-coordinate
         cy = 500f    // Principal point y-coordinate
     )
+
+    /** Holds currently selected 3D model */
+    private val _selectedModel = MutableStateFlow<String?>(null)
+    val selectedModel: StateFlow<String?> = _selectedModel
 
     fun setArSceneView(sceneView: ArSceneView) {
         arSceneView = sceneView
@@ -183,6 +187,41 @@ class ARDepthEstimationViewModel @Inject constructor(
     fun clearDepthMap() {
         _depthBitmap.value = null
     }
+
+    fun saveLayoutWithModels(layoutName: String, models: List<ModelEntity>) {
+        if (layoutName.isBlank()) {
+            Log.e(TAG, "❌ Error: Layout name cannot be empty!")
+            return
+        }
+        if (models.isEmpty()) {
+            Log.e(TAG, "❌ Error: At least one model is required!")
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                repository.saveLayoutWithModels(layoutName, models)
+
+                Log.d(TAG, "💾 Layout '$layoutName' saved with ${models.size} models.")
+
+                models.forEach { model ->
+                    Log.d(TAG, "📌 Model Saved -> ID: ${model.layoutId}, Name: ${model.modelName}, " +
+                            "Position: (${model.posX}, ${model.posY}, ${model.posZ}), " +
+                            "Rotation: (${model.qx}, ${model.qy}, ${model.qz}, ${model.qw}), " +
+                            "🌍 Geospatial Location: (Lat: ${model.latitude}, Long: ${model.longitude}, Alt: ${model.altitude})"
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Error saving layout: ${e.message}", e)
+            }
+        }
+    }
+
+    fun selectModel(modelName: String) {
+        _selectedModel.value = modelName
+        Log.d(TAG, "✅ Model selected: $modelName")
+    }
+
 }
 
 

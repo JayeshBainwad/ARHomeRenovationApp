@@ -1,4 +1,4 @@
-package com.jsb.arhomerenovat.presentation
+package com.jsb.arhomerenovat.feature_midas_depth_estimation.point_cloud_generator
 
 import android.graphics.Bitmap
 
