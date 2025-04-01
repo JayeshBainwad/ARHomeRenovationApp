@@ -339,7 +339,7 @@ fun ARCoreView(
                         HelloArActivity.logD("Initializing SampleRender and Renderer")
                         try {
                             // Initialize SampleRender only once
-                            val sampleRender = SampleRender(this, renderer, context.assets)
+                            val sampleRender = SampleRender(this, renderer, context.assets) // value-parameter renderer: HelloArRenderer
 
                             setRenderer(object : GLSurfaceView.Renderer {
                                 override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
@@ -368,44 +368,10 @@ fun ARCoreView(
                     }
 
                     setOnTouchListener { v, event ->
-                        // Process scale and rotation first
-                        activity.scaleGestureDetector.onTouchEvent(event)
-
-                        when (event.action) {
-                            MotionEvent.ACTION_DOWN -> {
-                                // Record initial touch position
-                                activity.lastTouchX = event.x
-                                activity.lastTouchY = event.y
-                            }
-                            MotionEvent.ACTION_MOVE -> {
-                                if (event.pointerCount == 1) {
-                                    // Calculate movement delta (translation)
-                                    val currentX = event.x
-                                    val currentY = event.y
-                                    activity.deltaX += (currentX - activity.lastTouchX) * 0.01f
-                                    activity.deltaY += (currentY - activity.lastTouchY) * 0.01f
-                                    activity.lastTouchX = currentX
-                                    activity.lastTouchY = currentY
-                                }
-                                else if (event.pointerCount == 2) {
-                                    // Rotation logic (unchanged)
-                                    val newX = event.getX(0) - event.getX(1)
-                                    val newY = event.getY(0) - event.getY(1)
-                                    activity.rotationAngle += Math.toDegrees(
-                                        atan2(newY.toDouble(), newX.toDouble()) -
-                                                atan2(activity.lastTouchY.toDouble(), activity.lastTouchX.toDouble())
-                                    ).toFloat()
-                                    activity.lastTouchX = newX
-                                    activity.lastTouchY = newY
-                                }
-                            }
-                            MotionEvent.ACTION_UP -> {
-                                // No need to reset deltas here - keep the transformed position
-                                v.performClick()
-                            }
+                        if (event.action == MotionEvent.ACTION_UP) {
+                            v.performClick()
                         }
-
-                        activity.tapHelper.onTouch(v, event)
+                        tapHelper.onTouch(v, event)
                         true
                     }
                 }

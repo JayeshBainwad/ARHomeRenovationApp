@@ -1,3 +1,52 @@
+//import android.graphics.Bitmap
+//import android.util.Log
+//import androidx.compose.foundation.Image
+//import androidx.compose.foundation.layout.Arrangement
+//import androidx.compose.foundation.layout.Box
+//import androidx.compose.foundation.layout.aspectRatio
+//import androidx.compose.foundation.layout.fillMaxSize
+//import androidx.compose.foundation.layout.fillMaxWidth
+//import androidx.compose.foundation.layout.height
+//import androidx.compose.foundation.layout.padding
+//import androidx.compose.foundation.lazy.grid.GridCells
+//import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+//import androidx.compose.material3.Button
+//import androidx.compose.material3.Text
+//import androidx.compose.runtime.Composable
+//import androidx.compose.runtime.LaunchedEffect
+//import androidx.compose.runtime.collectAsState
+//import androidx.compose.runtime.getValue
+//import androidx.compose.runtime.mutableStateListOf
+//import androidx.compose.runtime.mutableStateOf
+//import androidx.compose.runtime.remember
+//import androidx.compose.runtime.setValue
+//import androidx.compose.ui.Alignment
+//import androidx.compose.ui.Modifier
+//import androidx.compose.ui.draw.clipToBounds
+//import androidx.compose.ui.draw.rotate
+//import androidx.compose.ui.graphics.asImageBitmap
+//import androidx.compose.ui.platform.LocalConfiguration
+//import androidx.compose.ui.unit.dp
+//import androidx.hilt.navigation.compose.hiltViewModel
+//import com.google.ar.core.Config
+//import com.google.ar.core.TrackingState
+//import com.jsb.arhomerenovat.feature_ar_home.data.local.ModelEntity
+//import com.jsb.arhomerenovat.feature_ar_home.presentation.util.ModelSelectionBottomSheet
+//import io.github.sceneview.ar.ARScene
+//import io.github.sceneview.ar.ArSceneView
+//import io.github.sceneview.ar.arcore.position
+//import io.github.sceneview.ar.arcore.quaternion
+//import io.github.sceneview.ar.arcore.rotation
+//import io.github.sceneview.ar.node.ArModelNode
+//import io.github.sceneview.math.Position
+//import io.github.sceneview.math.Rotation
+//import kotlinx.coroutines.CoroutineScope
+//import kotlinx.coroutines.Dispatchers
+//import kotlinx.coroutines.Job
+//import kotlinx.coroutines.delay
+//import kotlinx.coroutines.isActive
+//import kotlinx.coroutines.launch
+
 //package com.jsb.arhomerenovat.feature_ar_home.presentation
 //
 //import android.util.Log
@@ -131,7 +180,6 @@
 
 
 
-
 // Working. MiDaS Depth map display with ARScene().
 package com.jsb.arhomerenovat.feature_ar_home.presentation
 
@@ -148,6 +196,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -184,12 +233,22 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import io.github.sceneview.node.Node
+
 private const val TAG = "ARDepthScreen"
 
 @Composable
 fun ARDepthEstimationScreen(
     initialModelFileName: String,
-    viewModel: ARDepthEstimationViewModel = hiltViewModel()
+    navigate: NavController,
+    viewModel: ARDepthEstimationViewModel = hiltViewModel(),
 ) {
 
     var selectedModel by remember { mutableStateOf(initialModelFileName) }
@@ -203,6 +262,7 @@ fun ARDepthEstimationScreen(
 
     val addedModels = remember { mutableStateListOf<ModelEntity>() }
     var isModelPlaced by remember { mutableStateOf(false) } // Restrict multiple model placements
+    var isSaveButtonEnabled by remember { mutableStateOf(false) } // Restrict multiple model placements
 
     val depthBitmap by viewModel.depthBitmap.collectAsState()
     var isDepthCaptureActive by remember { mutableStateOf(false) }
@@ -214,6 +274,13 @@ fun ARDepthEstimationScreen(
     val arViewHeight = (LocalConfiguration.current.screenWidthDp.dp / depthMapAspectRatio)
     val buttonAreaHeight = LocalConfiguration.current.screenHeightDp.dp - arViewHeight
     var lastDepthBitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    var isPlaneDetected by remember { mutableStateOf(false) }
+
+    var lastTapTime by remember { mutableStateOf(0L) }
+    val doubleTapThreshold = 300L // milliseconds between taps to count as double tap
+    var isDoubleTapHandled by remember { mutableStateOf(false) }
 
     LaunchedEffect(isDepthCaptureActive) {
         if (isDepthCaptureActive) {
@@ -243,8 +310,12 @@ fun ARDepthEstimationScreen(
                     .fillMaxSize(),
                 onCreate = { sceneView ->
                     arSceneView.value = sceneView
-                    Log.d(TAG, "✅ AR Scene Created")
                     viewModel.setArSceneView(sceneView)
+                    Log.d(TAG, "✅ AR Scene Created")
+
+                    // Disable plane visualization
+                    sceneView.planeRenderer.isVisible = false
+                    sceneView.planeRenderer.isEnabled = true
                 },
                 onSessionCreate = { session ->
                     Log.d(TAG, "✅ AR Session Created")
@@ -253,10 +324,30 @@ fun ARDepthEstimationScreen(
                     val config = session.config.apply {
                         geospatialMode = Config.GeospatialMode.ENABLED
                         depthMode = Config.DepthMode.AUTOMATIC // ✅ Enable Depth Mode
+                        planeFindingMode = Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL
                     }
                     session.configure(config)
                 },
+                onFrame = {
+                    // Check for plane detection
+                    val wasPlaneDetected = isPlaneDetected
+                    isPlaneDetected = arSceneView.value?.arSession?.let { session ->
+                        session.getAllTrackables(com.google.ar.core.Plane::class.java)
+                            .any { it.trackingState == TrackingState.TRACKING }
+                    } ?: false
+
+                    if (isPlaneDetected && !wasPlaneDetected) {
+                        // Show snackbar when plane is first detected
+                        CoroutineScope(Dispatchers.Main).launch {
+                            snackbarHostState.showSnackbar(
+                                message = "Start placing the 3D object",
+                                duration = SnackbarDuration.Short
+                            )
+                        }
+                    }
+                },
                 onTap = { hitResult ->
+
                     if (isModelPlaced) {
                         Log.d(TAG, "⚠️ A model is already placed. Save it before adding another.")
                         return@ARScene
@@ -290,9 +381,11 @@ fun ARDepthEstimationScreen(
                                     this.isScaleEditable = true
                                     this.rotation = Rotation(pose.rotation)
                                     this.position = Position(pose.position)
+                                    this.isSelectable = true
 
                                     activeModelNode = this
                                     isModelPlaced = true // Restrict new model addition
+                                    isSaveButtonEnabled = true
 
                                     // ✅ Store model data with geospatial values
                                     addedModels.add(
@@ -322,8 +415,48 @@ fun ARDepthEstimationScreen(
                                 }
                             )
 
+                            onSingleTapUp = listOf {
+                                // Check if this is part of a double tap
+                                val currentTime = System.currentTimeMillis()
+                                if (currentTime - lastTapTime < doubleTapThreshold) {
+                                    isDoubleTapHandled = true
+                                    return@listOf
+                                }
+                                lastTapTime = currentTime
+
+                                // Use a coroutine to delay the single tap action slightly
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    delay(doubleTapThreshold / 2) // Wait half the double tap threshold
+
+                                    // If a double tap was detected during this time, don't execute single tap
+                                    if (!isDoubleTapHandled) {
+                                        // Deselect previous selection if any
+                                        activeModelNode?.selectionVisualizer = null
+
+                                        // Select this model
+                                        isSaveButtonEnabled = true
+                                        activeModelNode = this@apply
+                                        this@apply.isEditable = true
+                                        this@apply.isScaleEditable = true
+
+                                        // Create selection visualization
+                                        this@apply.selectionVisualizer = Node(this@apply.engine).apply {
+                                            scale = Position(1.1f, 1.1f, 1.1f)
+                                        }
+
+                                        snackbarHostState.showSnackbar(
+                                            message = "Model selected",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
+                                    isDoubleTapHandled = false // Reset for next gesture
+                                }
+                            }
+
                             // 🔄 Disable Editing After Saving
                             onDoubleTapEvent = listOf {
+                                isDoubleTapHandled = true // Mark that we're handling a double tap
+
                                 if (isWaitingForToggle) return@listOf
 
                                 isWaitingForToggle = true
@@ -378,6 +511,19 @@ fun ARDepthEstimationScreen(
 
             )
 
+            // Improved searching text overlay
+            if (!isPlaneDetected) {
+                Text(
+                    text = "Searching for surface...",
+                    modifier = Modifier
+                        .align(Alignment.Center),
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
+
             // Depth Map Overlay
             if (isDepthCaptureActive) {
                 lastDepthBitmap?.let { bitmap ->
@@ -418,20 +564,23 @@ fun ARDepthEstimationScreen(
                                 viewModel.saveLayoutWithModels("MyLayout", addedModels.toList())
                                 Log.d(TAG, "💾 Layout saved with ${addedModels.size} models.")
 
-                                // ❌ Make saved models non-editable
+                                // Clean up the active model after saving
                                 activeModelNode?.let {
                                     it.isEditable = false
                                     it.isScaleEditable = false
                                     it.isRotationEditable = false
-                                    it.onDoubleTapEvent = emptyList() // Disable further interaction
+                                    it.selectionVisualizer = null  // Remove selection visualization
                                 }
 
-                                isModelPlaced = false // Allow adding a new model
+                                activeModelNode = null  // Clear the active model
+                                isSaveButtonEnabled = false
+                                isModelPlaced = false  // Allow adding a new model
                             } else {
                                 Log.e(TAG, "❌ No models to save.")
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
+                        enabled = isSaveButtonEnabled
                     ) {
                         Text("Save Model")
                     }
@@ -451,10 +600,34 @@ fun ARDepthEstimationScreen(
                         Text("Add Model")
                     }
                     3 -> Button(
-                        onClick = { /* Button 4 action */ },
-                        modifier = Modifier.fillMaxWidth()
+                        onClick = {
+                            activeModelNode?.let { node ->
+                                node.selectionVisualizer = null
+                                arSceneView.value?.removeChild(node)
+                                // Find and remove only the specific model from addedModels
+                                val iterator = addedModels.iterator()
+                                while (iterator.hasNext()) {
+                                    val model = iterator.next()
+                                    if (model.posX == node.position.x &&
+                                        model.posY == node.position.y &&
+                                        model.posZ == node.position.z
+                                    ) {
+                                        iterator.remove()
+                                        break
+                                    }
+                                }
+                                activeModelNode = null
+                                isModelPlaced = false
+                                isSaveButtonEnabled = false
+                                Log.d(TAG, "🗑️ Model deleted")
+                            } ?: run {
+                                Log.d(TAG, "⚠️ No model to delete")
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = activeModelNode != null
                     ) {
-                        Text("Button 4")
+                        Text("Delete Model")
                     }
                     4 -> Button(
                         onClick = { /* Button 5 action */ },
@@ -463,14 +636,23 @@ fun ARDepthEstimationScreen(
                         Text("Button 5")
                     }
                     5 -> Button(
-                        onClick = { /* Button 6 action */ },
-                        modifier = Modifier.fillMaxWidth()
+                        onClick = { navigate.navigateUp() },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = true
                     ) {
-                        Text("Button 6")
+                        Text("Done")
                     }
                 }
             }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = buttonAreaHeight + 16.dp) // Position above buttons
+        )
+
         if (showModelSelectionSheet) {
             ModelSelectionBottomSheet(
                 onModelSelected = { selectedModelName ->

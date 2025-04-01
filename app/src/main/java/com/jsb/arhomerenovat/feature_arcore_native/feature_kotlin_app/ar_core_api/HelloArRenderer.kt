@@ -130,7 +130,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
   val worldLightDirection = floatArrayOf(0.0f, 0.0f, 0.0f, 0.0f)
   val viewLightDirection = FloatArray(4) // view x world light direction
 
-  val session
+  var session: Session? = null
     get() = activity.arCoreSessionHelper.session
 
   val displayRotationHelper = DisplayRotationHelper(activity)

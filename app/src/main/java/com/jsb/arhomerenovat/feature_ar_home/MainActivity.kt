@@ -59,7 +59,8 @@ class MainActivity : ComponentActivity() {
 
                     composable("ar_depth_screen/{modelFileName}") { backStackEntry ->
                         val modelFileName = backStackEntry.arguments?.getString("modelFileName") ?: ""
-                        ARDepthEstimationScreen(modelFileName)
+                        val navigate = navController
+                        ARDepthEstimationScreen(modelFileName, navigate)
                     }
 
 //                    composable("saved_layouts_screen") {
