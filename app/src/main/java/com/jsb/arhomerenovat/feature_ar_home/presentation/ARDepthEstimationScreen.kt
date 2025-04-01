@@ -237,9 +237,11 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.google.ar.core.ArCoreApk
 import io.github.sceneview.node.Node
 
 private const val TAG = "ARDepthScreen"
@@ -282,6 +284,8 @@ fun ARDepthEstimationScreen(
     val doubleTapThreshold = 300L // milliseconds between taps to count as double tap
     var isDoubleTapHandled by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current
+
     LaunchedEffect(isDepthCaptureActive) {
         if (isDepthCaptureActive) {
             // Continuously capture depth frames when active
@@ -313,21 +317,101 @@ fun ARDepthEstimationScreen(
                     viewModel.setArSceneView(sceneView)
                     Log.d(TAG, "✅ AR Scene Created")
 
+                    // Check ARCore availability
+                    val availability = ArCoreApk.getInstance().checkAvailability(context)
+                    if (availability.isTransient || !availability.isSupported) {
+                        CoroutineScope(Dispatchers.Main).launch {
+                            snackbarHostState.showSnackbar(
+                                message = when {
+                                    availability.isTransient -> "AR features temporarily unavailable"
+                                    !availability.isSupported -> "AR not supported on this device"
+                                    else -> "AR features unavailable"
+                                },
+                                duration = SnackbarDuration.Long
+                            )
+                        }
+                        return@ARScene
+                    }
+
                     // Disable plane visualization
                     sceneView.planeRenderer.isVisible = false
                     sceneView.planeRenderer.isEnabled = true
                 },
+//                onCreate = { sceneView ->
+//                    arSceneView.value = sceneView
+//                    viewModel.setArSceneView(sceneView)
+//                    Log.d(TAG, "✅ AR Scene Created")
+//
+//                    // Disable plane visualization
+//                    sceneView.planeRenderer.isVisible = false
+//                    sceneView.planeRenderer.isEnabled = true
+//                },
                 onSessionCreate = { session ->
                     Log.d(TAG, "✅ AR Session Created")
 
-                    // ✅ Enable Geospatial & Depth Mode
+                    // Check device capabilities
                     val config = session.config.apply {
-                        geospatialMode = Config.GeospatialMode.ENABLED
-                        depthMode = Config.DepthMode.AUTOMATIC // ✅ Enable Depth Mode
+                        // Check geospatial support
+                        geospatialMode = when {
+                            session.isGeospatialModeSupported(Config.GeospatialMode.ENABLED) -> {
+                                Log.d(TAG, "✅ Geospatial Mode Supported")
+                                Config.GeospatialMode.ENABLED
+                            }
+                            else -> {
+                                Log.w(TAG, "⚠️ Geospatial Mode Not Supported")
+                                Config.GeospatialMode.DISABLED
+                            }
+                        }
+
+                        // Check depth support
+                        depthMode = when {
+                            session.isDepthModeSupported(Config.DepthMode.AUTOMATIC) -> {
+                                Log.d(TAG, "✅ Depth Mode Supported")
+                                Config.DepthMode.AUTOMATIC
+                            }
+                            session.isDepthModeSupported(Config.DepthMode.RAW_DEPTH_ONLY) -> {
+                                Log.w(TAG, "⚠️ Only Raw Depth Supported")
+                                Config.DepthMode.RAW_DEPTH_ONLY
+                            }
+                            else -> {
+                                Log.w(TAG, "⚠️ Depth Not Supported")
+                                Config.DepthMode.DISABLED
+                            }
+                        }
+
+                        // Check plane detection support
                         planeFindingMode = Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL
                     }
+
                     session.configure(config)
+
+                    // Show capability warnings to user
+                    CoroutineScope(Dispatchers.Main).launch {
+                        if (config.geospatialMode == Config.GeospatialMode.DISABLED) {
+                            snackbarHostState.showSnackbar(
+                                message = "Geospatial features not available",
+                                duration = SnackbarDuration.Long
+                            )
+                        }
+                        if (config.depthMode == Config.DepthMode.DISABLED) {
+                            snackbarHostState.showSnackbar(
+                                message = "Depth features not available",
+                                duration = SnackbarDuration.Long
+                            )
+                        }
+                    }
                 },
+//                onSessionCreate = { session ->
+//                    Log.d(TAG, "✅ AR Session Created")
+//
+//                    // ✅ Enable Geospatial & Depth Mode
+//                    val config = session.config.apply {
+//                        geospatialMode = Config.GeospatialMode.ENABLED
+//                        depthMode = Config.DepthMode.AUTOMATIC // ✅ Enable Depth Mode
+//                        planeFindingMode = Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL
+//                    }
+//                    session.configure(config)
+//                },
                 onFrame = {
                     // Check for plane detection
                     val wasPlaneDetected = isPlaneDetected
