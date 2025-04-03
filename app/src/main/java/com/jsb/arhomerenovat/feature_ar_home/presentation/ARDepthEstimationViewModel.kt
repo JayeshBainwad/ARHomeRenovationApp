@@ -61,6 +61,9 @@ class ARDepthEstimationViewModel @Inject constructor(
     private val _savedLayouts = MutableStateFlow<List<LayoutWithModels>>(emptyList())
     val savedLayouts: StateFlow<List<LayoutWithModels>> = _savedLayouts
 
+    private val _loadedModels = MutableStateFlow<List<ModelEntity>>(emptyList())
+    val loadedModels: StateFlow<List<ModelEntity>> = _loadedModels
+
     fun setArSceneView(sceneView: ArSceneView) {
         arSceneView = sceneView
     }
@@ -236,8 +239,7 @@ class ARDepthEstimationViewModel @Inject constructor(
 
     fun loadModelsForLayout(layoutId: Int) {
         viewModelScope.launch {
-            val models = repository.getModelsForLayout(layoutId)
-            // Handle the loaded models (e.g., display them in AR)
+            _loadedModels.value = repository.getModelsForLayout(layoutId)
         }
     }
 
@@ -252,5 +254,4 @@ class ARDepthEstimationViewModel @Inject constructor(
         _selectedModel.value = modelName
         Log.d(TAG, "✅ Model selected: $modelName")
     }
-
 }

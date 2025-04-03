@@ -1,6 +1,11 @@
 package com.jsb.arhomerenovat.feature_ar_home.presentation
 
+import android.content.ContentValues
+import android.content.Context
 import android.graphics.Bitmap
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -57,12 +62,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.core.view.drawToBitmap
 import androidx.navigation.NavController
 import com.google.ar.core.ArCoreApk
+import dev.romainguy.kotlin.math.Quaternion
 import io.github.sceneview.node.Node
+
+import android.graphics.PixelFormat
+import android.os.Handler
+import android.os.Looper
+import android.view.PixelCopy
+import androidx.compose.ui.graphics.toArgb
+import android.widget.FrameLayout
+import androidx.annotation.RequiresApi
 
 private const val TAG = "ARDepthScreen"
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ARDepthEstimationScreen(
     initialModelFileName: String? = null,
@@ -70,16 +86,6 @@ fun ARDepthEstimationScreen(
     navigate: NavController,
     viewModel: ARDepthEstimationViewModel = hiltViewModel()
 ) {
-    // Handle both cases:
-    // - If initialModelFileName is provided, it's a new model placement
-    // - If layoutId is provided, load saved models for that layout
-
-    LaunchedEffect(layoutId) {
-        layoutId?.let { id ->
-            viewModel.loadModelsForLayout(id)
-        }
-    }
-
     var selectedModel by remember { mutableStateOf(initialModelFileName) }
     var activeModelNode by remember { mutableStateOf<ArModelNode?>(null) }
     var showModelSelectionSheet by remember { mutableStateOf(false) }
@@ -113,6 +119,8 @@ fun ARDepthEstimationScreen(
 
     val context = LocalContext.current
 
+    val loadedModels by viewModel.loadedModels.collectAsState()
+
     LaunchedEffect(isDepthCaptureActive) {
         if (isDepthCaptureActive) {
             // Continuously capture depth frames when active
@@ -123,6 +131,51 @@ fun ARDepthEstimationScreen(
                     }
                 }
                 delay(1000) // Adjust this delay as needed for performance
+            }
+        }
+    }
+
+    LaunchedEffect(arSceneView.value, loadedModels) {
+        arSceneView.value?.let { sceneView ->
+            if (layoutId != null) {
+                // Clear existing models
+                sceneView.children.filterIsInstance<ArModelNode>().forEach {
+                    sceneView.removeChild(it)
+                }
+
+                // Load new models
+                loadedModels.forEach { model ->
+                    val modelNode = ArModelNode(sceneView.engine).apply {
+                        loadModelGlbAsync(
+                            glbFileLocation = model.modelName,
+                            scaleToUnits = 0.3f,
+                            onLoaded = {
+                                // Set position and rotation from saved data
+                                position = Position(
+                                    x = model.posX,
+                                    y = model.posY,
+                                    z = model.posZ
+                                )
+                                quaternion = Quaternion(
+                                    x = model.qx,
+                                    y = model.qy,
+                                    z = model.qz,
+                                    w = model.qw
+                                )
+                                isVisible = true
+                                isEditable = false
+                                isScaleEditable = false
+                                isRotationEditable = false
+
+                                Log.d(TAG, "🌍 Loaded saved model: ${model.modelName}")
+                            },
+                            onError = { error ->
+                                Log.e(TAG, "❌ Error loading saved model: ${error.message}")
+                            }
+                        )
+                    }
+                    sceneView.addChild(modelNode)
+                }
             }
         }
     }
@@ -396,7 +449,7 @@ fun ARDepthEstimationScreen(
                         // ✅ Enable Depth Occlusion Mode
                         sceneView.depthEnabled = true
                         sceneView.isFocusable = true
-                        sceneView.isDepthOcclusionEnabled = true
+                        sceneView.isDepthOcclusionEnabled = false
                         sceneView.addChild(modelNode)
                         Log.d(TAG, "✅ Model added to AR scene")
                     }
@@ -519,11 +572,47 @@ fun ARDepthEstimationScreen(
                     ) {
                         Text("Delete Model")
                     }
+                    // Update button 5 (index 4) with this code
                     4 -> Button(
-                        onClick = { /* Button 5 action */ },
+                        onClick = {
+                            arSceneView.value?.let { sceneView ->
+                                val bitmap = Bitmap.createBitmap(
+                                    sceneView.width,
+                                    sceneView.height,
+                                    Bitmap.Config.ARGB_8888
+                                )
+
+                                try {
+                                    // Use PixelCopy for SurfaceView capture
+                                    PixelCopy.request(
+                                        sceneView,
+                                        null,
+                                        bitmap,
+                                        { copyResult ->
+                                            if (copyResult == PixelCopy.SUCCESS) {
+                                                saveBitmapToGallery(context, bitmap)
+                                                CoroutineScope(Dispatchers.Main).launch {
+                                                    snackbarHostState.showSnackbar(
+                                                        message = "Screenshot saved to gallery",
+                                                        duration = SnackbarDuration.Short
+                                                    )
+                                                }
+                                            } else {
+                                                Log.e(TAG, "Failed to capture screenshot")
+                                                showErrorSnackbar(snackbarHostState)
+                                            }
+                                        },
+                                        Handler(Looper.getMainLooper())
+                                    )
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Screenshot capture failed: ${e.message}")
+                                    showErrorSnackbar(snackbarHostState)
+                                }
+                            } ?: showErrorSnackbar(snackbarHostState)
+                        },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Button 5")
+                        Text("Take Screenshot")
                     }
                     5 -> Button(
                         onClick = {
@@ -534,7 +623,7 @@ fun ARDepthEstimationScreen(
                         modifier = Modifier.fillMaxWidth(),
                         enabled = true
                     ) {
-                        Text("Save Layout")
+                        Text(if (layoutId != null) "Update Layout" else "Save Layout")
                     }
                 }
             }
@@ -568,5 +657,39 @@ fun ARDepthEstimationScreen(
                 onDismiss = { showModelSelectionSheet = false }
             )
         }
+    }
+}
+
+// Add these helper functions outside the composable
+private fun saveBitmapToGallery(context: Context, bitmap: Bitmap) {
+    val filename = "AR_Screenshot_${System.currentTimeMillis()}.png"
+    val contentValues = ContentValues().apply {
+        put(MediaStore.Images.Media.DISPLAY_NAME, filename)
+        put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            put(MediaStore.Images.Media.RELATIVE_PATH, "${Environment.DIRECTORY_PICTURES}/ARHome")
+        }
+    }
+
+    try {
+        context.contentResolver.insert(
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            contentValues
+        )?.let { uri ->
+            context.contentResolver.openOutputStream(uri)?.use { stream ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+            }
+        }
+    } catch (e: Exception) {
+        Log.e(TAG, "Screenshot save failed: ${e.message}")
+    }
+}
+
+private fun showErrorSnackbar(snackbarHostState: SnackbarHostState) {
+    CoroutineScope(Dispatchers.Main).launch {
+        snackbarHostState.showSnackbar(
+            message = "Failed to capture screenshot",
+            duration = SnackbarDuration.Short
+        )
     }
 }
