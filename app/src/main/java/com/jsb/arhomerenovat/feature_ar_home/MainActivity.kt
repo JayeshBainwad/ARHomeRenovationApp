@@ -1,6 +1,5 @@
 package com.jsb.arhomerenovat.feature_ar_home
 
-import com.jsb.arhomerenovat.feature_ar_home.presentation.ARDepthEstimationScreen
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -24,11 +23,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.jsb.arhomerenovat.R
+import com.jsb.arhomerenovat.feature_ar_home.presentation.ARDepthEstimationScreen
 import com.jsb.arhomerenovat.feature_ar_home.presentation.ModelSelectionScreen
 import com.jsb.arhomerenovat.feature_ar_home.presentation.ProfileScreen
 import com.jsb.arhomerenovat.feature_ar_home.presentation.SavedLayoutScreen
@@ -74,7 +77,7 @@ class MainActivity : ComponentActivity() {
 
                     composable("model_selection_screen") {
                         ModelSelectionScreen(
-                            modifier = Modifier.background(color = MaterialTheme.colorScheme.background),
+                            modifier = Modifier.background(color = Color.White),
                             navController = navController,
                             onModelSelected = { selectedModel ->
                                 navController.navigate("ar_depth_screen/$selectedModel")
@@ -122,40 +125,71 @@ fun HomeScreen(navController: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // 3D Models Card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .padding(16.dp)
-                .clickable { navController.navigate("model_selection_screen") },
-            shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(8.dp)
-        ) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                // Consider adding a color to the text for better visibility
-                Text("3D Models",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
+        // "Let's Get Started" text at top center
+        Text(
+            text = "Let's Get Started",
+            style = MaterialTheme.typography.headlineMedium,
+            color = colorResource(id = R.color.lets_get_started),
+            modifier = Modifier.padding(top = 62.dp)
+        )
 
-        // Saved Layouts Card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .padding(16.dp)
-                .clickable { navController.navigate("saved_layouts_screen") },
-            shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(8.dp)
+        // Card container
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Saved Layouts", style = MaterialTheme.typography.headlineMedium)
+            // 3D Models Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .padding(16.dp)
+                    .background(color = Color.Transparent)
+                    .clickable { navController.navigate("model_selection_screen") },
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(8.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(color = colorResource(id = R.color.card_background)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "3D Models",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = Color.White
+                    )
+                }
+            }
+
+            // Saved Layouts Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .padding(16.dp)
+                    .background(color = Color.Transparent)
+                    .clickable { navController.navigate("saved_layouts_screen") },
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(8.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(color = colorResource(id = R.color.card_background)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "Saved Layouts",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = Color.White
+                    )
+                }
             }
         }
     }

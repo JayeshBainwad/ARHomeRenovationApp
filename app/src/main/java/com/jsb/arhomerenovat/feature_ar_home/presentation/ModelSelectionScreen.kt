@@ -1,6 +1,7 @@
 package com.jsb.arhomerenovat.feature_ar_home.presentation
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
@@ -22,13 +23,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarColors
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.jsb.arhomerenovat.R
 import com.jsb.arhomerenovat.feature_ar_home.domain.ModelData
 import com.jsb.arhomerenovat.feature_ar_home.presentation.util.getPngImageForModel
 
@@ -56,21 +64,35 @@ fun ModelSelectionScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Select 3D Model") },
+                title = {
+                    Text(
+                        text = "Select 3D Model",
+                        color = colorResource(R.color.top_app_bar_text),
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
+                            tint = colorResource(R.color.top_app_bar_text) // Set icon color
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.White,
+                    titleContentColor = colorResource(R.color.top_app_bar_text),
+                    navigationIconContentColor = colorResource(R.color.top_app_bar_text),
+                    actionIconContentColor = colorResource(R.color.top_app_bar_text)
+                )
             )
         },
         content = { paddingValues ->
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 modifier = Modifier
+                    .background(color = Color.White)
                     .fillMaxSize()
                     .padding(paddingValues)
                     .padding(horizontal = 16.dp)
@@ -90,15 +112,21 @@ fun ModelSelectionScreen(
 fun ModelItem(model: ModelData, onClick: () -> Unit) {
     Card(
         modifier = Modifier
-            .padding(8.dp)
+            .padding(top = 12.dp, start = 12.dp, end = 12.dp, bottom = 14.dp )
             .fillMaxWidth()
             .aspectRatio(0.8f),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 32.dp, // Shadow size
+            pressedElevation = 12.dp, // Shadow when pressed
+            focusedElevation = 15.dp, // Shadow when focused
+            hoveredElevation = 18.dp // Shadow when hovered
+        )
     ) {
         Column(
             modifier = Modifier
                 .clickable { onClick() }
+                .background(color = colorResource(id = R.color.card_background))
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -108,6 +136,7 @@ fun ModelItem(model: ModelData, onClick: () -> Unit) {
                 modifier = Modifier
                     .weight(1f)
                     .padding(8.dp)
+                    .background(color = Color.Transparent)
                     .fillMaxWidth(),
                 contentScale = ContentScale.Fit // Add content scale
             )
