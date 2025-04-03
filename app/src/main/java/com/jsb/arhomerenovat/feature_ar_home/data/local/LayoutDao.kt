@@ -1,3 +1,4 @@
+// LayoutDao.kt
 package com.jsb.arhomerenovat.feature_ar_home.data.local
 
 import androidx.room.Dao
@@ -8,8 +9,8 @@ import androidx.room.Query
 @Dao
 interface LayoutDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertLayout(layout: LayoutEntity): Long // Returns the ID of the inserted layout
+    suspend fun insertLayout(layout: LayoutEntity): Long
 
-    @Query("SELECT * FROM layouts ORDER BY timestamp DESC")
-    suspend fun getAllLayouts(): List<LayoutEntity>
+    @Query("SELECT * FROM layouts WHERE layoutId = :layoutId")
+    suspend fun getLayoutById(layoutId: Int): LayoutEntity?
 }

@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.ar.core.Frame
 import com.google.ar.core.exceptions.NotYetAvailableException
+import com.jsb.arhomerenovat.feature_ar_home.data.local.LayoutWithModels
 import com.jsb.arhomerenovat.feature_ar_home.data.local.ModelEntity
 import com.jsb.arhomerenovat.feature_ar_home.domain.repository.ModelRepository
 import com.jsb.arhomerenovat.feature_midas_depth_estimation.data.IntrinsicParameters
@@ -55,6 +56,10 @@ class ARDepthEstimationViewModel @Inject constructor(
     /** Holds currently selected 3D model */
     private val _selectedModel = MutableStateFlow<String?>(null)
     val selectedModel: StateFlow<String?> = _selectedModel
+
+    // ARDepthEstimationViewModel.kt (partial update)
+    private val _savedLayouts = MutableStateFlow<List<LayoutWithModels>>(emptyList())
+    val savedLayouts: StateFlow<List<LayoutWithModels>> = _savedLayouts
 
     fun setArSceneView(sceneView: ArSceneView) {
         arSceneView = sceneView
@@ -188,6 +193,8 @@ class ARDepthEstimationViewModel @Inject constructor(
         _depthBitmap.value = null
     }
 
+
+
     fun saveLayoutWithModels(layoutName: String, models: List<ModelEntity>) {
         if (layoutName.isBlank()) {
             Log.e(TAG, "❌ Error: Layout name cannot be empty!")
@@ -201,7 +208,6 @@ class ARDepthEstimationViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 repository.saveLayoutWithModels(layoutName, models)
-
                 Log.d(TAG, "💾 Layout '$layoutName' saved with ${models.size} models.")
 
                 models.forEach { model ->
@@ -211,9 +217,34 @@ class ARDepthEstimationViewModel @Inject constructor(
                             "🌍 Geospatial Location: (Lat: ${model.latitude}, Long: ${model.longitude}, Alt: ${model.altitude})"
                     )
                 }
+
+                // Refresh the layouts list
+                loadAllLayouts()
             } catch (e: Exception) {
                 Log.e(TAG, "❌ Error saving layout: ${e.message}", e)
             }
+        }
+    }
+
+    fun loadAllLayouts() {
+        viewModelScope.launch {
+            repository.getAllLayouts().collect { layouts ->
+                _savedLayouts.value = layouts
+            }
+        }
+    }
+
+    fun loadModelsForLayout(layoutId: Int) {
+        viewModelScope.launch {
+            val models = repository.getModelsForLayout(layoutId)
+            // Handle the loaded models (e.g., display them in AR)
+        }
+    }
+
+    fun deleteLayout(layoutId: Int) {
+        viewModelScope.launch {
+            repository.deleteLayout(layoutId)
+            loadAllLayouts() // Refresh the list after deletion
         }
     }
 
@@ -223,156 +254,3 @@ class ARDepthEstimationViewModel @Inject constructor(
     }
 
 }
-
-
-
-
-//package com.jsb.arhomerenovat.feature_ar_home.presentation
-//
-//import android.app.Application
-//import android.content.Context
-//import android.graphics.Bitmap
-//import android.util.Log
-//import androidx.camera.core.CameraSelector
-//import androidx.camera.core.ImageAnalysis
-//import androidx.camera.core.Preview
-//import androidx.camera.lifecycle.ProcessCameraProvider
-//import androidx.camera.view.PreviewView
-//import androidx.core.content.ContextCompat
-//import androidx.lifecycle.AndroidViewModel
-//import androidx.lifecycle.LifecycleOwner
-//import androidx.lifecycle.ViewModel
-//import androidx.lifecycle.ViewModelProvider
-//import androidx.lifecycle.viewModelScope
-//import com.google.ar.core.Frame
-//import com.jsb.arhomerenovat.feature_ar_home.data.local.ModelEntity
-//import com.jsb.arhomerenovat.feature_ar_home.data.repository.ModelRepositoryImpl
-//import com.jsb.arhomerenovat.feature_ar_home.domain.repository.ModelRepository
-//import com.jsb.arhomerenovat.feature_depth_estimation.data.FrameAnalyser
-//import com.jsb.arhomerenovat.feature_depth_estimation.data.MiDASModel
-//import com.jsb.arhomerenovat.feature_depth_estimation.presentation.DepthEstimationViewModel
-//import com.jsb.arhomerenovat.presentation.PointCloudGenerator
-//import dagger.hilt.android.lifecycle.HiltViewModel
-//import dagger.hilt.android.qualifiers.ApplicationContext
-//import kotlinx.coroutines.flow.MutableStateFlow
-//import kotlinx.coroutines.flow.StateFlow
-//import kotlinx.coroutines.launch
-//import java.util.concurrent.Executors
-//import javax.inject.Inject
-//
-//private const val TAG = "ARDepthScreen"
-//
-//@HiltViewModel
-//class ARDepthEstimationViewModel @Inject constructor(
-//    private val repository: ModelRepository,
-//    private val miDASModel: MiDASModel,
-//    private val pointCloudGenerator: PointCloudGenerator,
-//    @ApplicationContext private val context: Context
-//) : ViewModel() {
-//
-//    /** Holds currently selected 3D model */
-//    private val _selectedModel = MutableStateFlow<String?>(null)
-//    val selectedModel: StateFlow<String?> = _selectedModel
-//
-//    private val cameraProviderFuture by lazy { ProcessCameraProvider.getInstance(context) }
-//    private lateinit var frameAnalyser: FrameAnalyser
-//    private val _depthBitmap = MutableStateFlow<Bitmap?>(null)
-//    val depthBitmap: StateFlow<Bitmap?> = _depthBitmap
-//
-//    private val _isDepthEstimationEnabled = MutableStateFlow(true)
-//    val isDepthEstimationEnabled: StateFlow<Boolean> = _isDepthEstimationEnabled
-//
-//    private val _pointCloud = MutableStateFlow<List<PointCloudGenerator.Point3D>>(emptyList())
-//    val pointCloud: StateFlow<List<PointCloudGenerator.Point3D>> = _pointCloud
-//
-//    private var captureSingleFrame = false
-//
-//    init {
-//        frameAnalyser = FrameAnalyser(miDASModel) { depthMap: Bitmap ->
-//            if (captureSingleFrame) {
-//                _depthBitmap.value = depthMap
-//                processDepthMap(depthMap)
-//                captureSingleFrame = false
-//            }
-//        }
-//    }
-//
-//    fun captureSingleFrame() {
-//        captureSingleFrame = true
-//    }
-//
-//    fun processDepthMap(depthMap: Bitmap) {
-//        val points = pointCloudGenerator.generatePointCloud(depthMap)
-//        _pointCloud.value = points
-//    }
-//
-//    fun toggleDepthEstimation() {
-//        _isDepthEstimationEnabled.value = !_isDepthEstimationEnabled.value
-//    }
-//
-//    fun startCamera(lifecycleOwner: LifecycleOwner, previewView: PreviewView) {
-//        cameraProviderFuture.addListener({
-//            try {
-//                val cameraProvider = cameraProviderFuture.get()
-//                val preview = Preview.Builder().build().apply {
-//                    surfaceProvider = previewView.surfaceProvider
-//                }
-//
-//                val analysis = ImageAnalysis.Builder()
-//                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-//                    .build()
-//                    .also {
-//                        it.setAnalyzer(Executors.newSingleThreadExecutor(), frameAnalyser)
-//                    }
-//
-//                cameraProvider.unbindAll()
-//                cameraProvider.bindToLifecycle(
-//                    lifecycleOwner,
-//                    CameraSelector.DEFAULT_BACK_CAMERA,
-//                    preview,
-//                    analysis
-//                )
-//            } catch (e: Exception) {
-//                Log.e("DepthEstimationViewModel", "Error during camera initialization: ${e.message}", e)
-//            }
-//        }, ContextCompat.getMainExecutor(context))
-//    }
-//
-//    fun selectModel(modelName: String) {
-//        _selectedModel.value = modelName
-//        Log.d(TAG, "✅ Model selected: $modelName")
-//    }
-//
-//    fun saveLayoutWithModels(layoutName: String, models: List<ModelEntity>) {
-//        if (layoutName.isBlank()) {
-//            Log.e(TAG, "❌ Error: Layout name cannot be empty!")
-//            return
-//        }
-//        if (models.isEmpty()) {
-//            Log.e(TAG, "❌ Error: At least one model is required!")
-//            return
-//        }
-//
-//        viewModelScope.launch {
-//            try {
-//                repository.saveLayoutWithModels(layoutName, models)
-//
-//                Log.d(TAG, "💾 Layout '$layoutName' saved with ${models.size} models.")
-//
-//                models.forEach { model ->
-//                    Log.d(TAG, "📌 Model Saved -> ID: ${model.layoutId}, Name: ${model.modelName}, " +
-//                            "Position: (${model.posX}, ${model.posY}, ${model.posZ}), " +
-//                            "Rotation: (${model.qx}, ${model.qy}, ${model.qz}, ${model.qw}), " +
-//                            "🌍 Geospatial Location: (Lat: ${model.latitude}, Long: ${model.longitude}, Alt: ${model.altitude})"
-//                    )
-//                }
-//            } catch (e: Exception) {
-//                Log.e(TAG, "❌ Error saving layout: ${e.message}", e)
-//            }
-//        }
-//    }
-//
-//    companion object {
-//        private const val TAG = "ARDepthEstimationVM"
-//    }
-//}
