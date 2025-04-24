@@ -22,17 +22,19 @@ fun LayoutListItem(
     modelCount: Int,
     onClick: () -> Unit,
     onDelete: () -> Unit,
-    modifier: Modifier
+    modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .background(color = colorResource(id = R.color.card_background))
-            .clickable(onClick = onClick)
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = colorResource(id = R.color.card_background)
+        )
     ) {
         Row(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,

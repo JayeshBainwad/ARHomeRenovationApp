@@ -75,6 +75,10 @@ import android.view.PixelCopy
 import androidx.compose.ui.graphics.toArgb
 import android.widget.FrameLayout
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.background
+import androidx.compose.material3.ButtonColors
+import androidx.compose.ui.res.colorResource
+import com.jsb.arhomerenovat.R
 
 private const val TAG = "ARDepthScreen"
 
@@ -214,8 +218,8 @@ fun ARDepthEstimationScreen(
                     }
 
                     // Disable plane visualization
-                    sceneView.planeRenderer.isVisible = false
-                    sceneView.planeRenderer.isEnabled = true
+//                    sceneView.planeRenderer.isVisible = false
+//                    sceneView.planeRenderer.isEnabled = true
                 },
                 onSessionCreate = { session ->
                     Log.d(TAG, "✅ AR Session Created")
@@ -500,9 +504,19 @@ fun ARDepthEstimationScreen(
                 when (index) {
                     0 -> Button(
                         onClick = { isDepthCaptureActive = !isDepthCaptureActive },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(color = Color.Transparent),
+                        colors = ButtonColors(
+                            containerColor = colorResource(id = R.color.card_background),
+                            contentColor = Color.White,
+                            disabledContainerColor = colorResource(id = R.color.card_background).copy(alpha = 0.5f),
+                            disabledContentColor = Color.White.copy(alpha = 0.5f)
+                        )
                     ) {
-                        Text(if (isDepthCaptureActive) "Stop Depth View" else "Show Depth View")
+                        Text(
+                            text = if (isDepthCaptureActive) "Stop Depth View" else "Show Depth View"
+                        )
                     }
                     1 -> Button(
                         onClick = {
@@ -522,8 +536,16 @@ fun ARDepthEstimationScreen(
                                 Log.e(TAG, "❌ No models to save.")
                             }
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = isSaveButtonEnabled
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(color = Color.Transparent),
+                        enabled = isSaveButtonEnabled,
+                        colors = ButtonColors(
+                            containerColor = colorResource(id = R.color.card_background),
+                            contentColor = Color.White,
+                            disabledContainerColor = colorResource(id = R.color.card_background).copy(alpha = 0.5f),
+                            disabledContentColor = Color.White.copy(alpha = 0.5f)
+                        )
                     ) {
                         Text("Save Model")
                     }
@@ -537,8 +559,16 @@ fun ARDepthEstimationScreen(
                                 it.isRotationEditable = true
                             }
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !isModelPlaced // Disable if a model is placed
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(color = Color.Transparent),
+                        enabled = !isModelPlaced,
+                        colors = ButtonColors(
+                            containerColor = colorResource(id = R.color.card_background),
+                            contentColor = Color.White,
+                            disabledContainerColor = colorResource(id = R.color.card_background).copy(alpha = 0.5f),
+                            disabledContentColor = Color.White.copy(alpha = 0.5f)
+                        )
                     ) {
                         Text("Add Model")
                     }
@@ -567,8 +597,16 @@ fun ARDepthEstimationScreen(
                                 Log.d(TAG, "⚠️ No model to delete")
                             }
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = activeModelNode != null
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(color = Color.Transparent),
+                        enabled = activeModelNode != null,
+                        colors = ButtonColors(
+                            containerColor = colorResource(id = R.color.card_background),
+                            contentColor = Color.White,
+                            disabledContainerColor = colorResource(id = R.color.card_background).copy(alpha = 0.5f),
+                            disabledContentColor = Color.White.copy(alpha = 0.5f)
+                        )
                     ) {
                         Text("Delete Model")
                     }
@@ -610,7 +648,15 @@ fun ARDepthEstimationScreen(
                                 }
                             } ?: showErrorSnackbar(snackbarHostState)
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(color = Color.Transparent),
+                        colors = ButtonColors(
+                            containerColor = colorResource(id = R.color.card_background),
+                            contentColor = Color.White,
+                            disabledContainerColor = colorResource(id = R.color.card_background).copy(alpha = 0.5f),
+                            disabledContentColor = Color.White.copy(alpha = 0.5f)
+                        )
                     ) {
                         Text("Take Screenshot")
                     }
@@ -620,8 +666,16 @@ fun ARDepthEstimationScreen(
                             Log.d(TAG, "💾 Layout saved with ${addedModels.size} models.")
                             navigate.navigateUp()
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = true
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(color = Color.Transparent),
+                        enabled = true,
+                        colors = ButtonColors(
+                            containerColor = colorResource(id = R.color.card_background),
+                            contentColor = Color.White,
+                            disabledContainerColor = colorResource(id = R.color.card_background).copy(alpha = 0.5f),
+                            disabledContentColor = Color.White.copy(alpha = 0.5f)
+                        )
                     ) {
                         Text(if (layoutId != null) "Update Layout" else "Save Layout")
                     }

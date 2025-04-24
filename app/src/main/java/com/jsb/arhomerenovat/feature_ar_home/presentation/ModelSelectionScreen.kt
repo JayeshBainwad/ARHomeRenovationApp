@@ -57,7 +57,15 @@ fun ModelSelectionScreen(
         ModelData(getPngImageForModel("White Table.glb"), "White Table.glb"),
         ModelData(getPngImageForModel("Red Couch.glb"), "Red Couch.glb"),
         ModelData(getPngImageForModel("Brown Couch.glb"), "Brown Couch.glb"),
-        ModelData(getPngImageForModel("White Couch.glb"), "White Couch.glb")
+        ModelData(getPngImageForModel("White Couch.glb"), "White Couch.glb"),
+        ModelData(getPngImageForModel("Ceiling Fan.glb"), "Ceiling Fan.glb"),
+        ModelData(getPngImageForModel("Ceiling fan (1).glb"), "Ceiling fan (1).glb"),
+        ModelData(getPngImageForModel("Ceiling Lamp.glb"), "Ceiling Lamp.glb"),
+        ModelData(getPngImageForModel("Ceiling Light (1).glb"), "Ceiling Light (1).glb"),
+        ModelData(getPngImageForModel("Ceiling Light.glb"), "Ceiling Light.glb"),
+        ModelData(getPngImageForModel("Floor Tile.glb"), "Floor Tile.glb"),
+        ModelData(getPngImageForModel("Picnic Basket.glb"), "Picnic Basket.glb"),
+        ModelData(getPngImageForModel("Wall dsk speaker.glb"), "Wall dsk speaker.glb")
     )
 
     Scaffold(

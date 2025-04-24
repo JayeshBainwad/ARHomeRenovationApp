@@ -14,6 +14,16 @@ fun getPngImageForModel(modelFileName: String): Int {
         "Red Couch.glb" -> R.drawable.red_couch
         "Brown Couch.glb" -> R.drawable.brown_couch
         "White Couch.glb" -> R.drawable.white_couch
+        "Ceiling Fan.glb" -> R.drawable.ceiling_fan
+        "Ceiling fan (1).glb" -> R.drawable.ceiling_fan__1_
+        "Ceiling Lamp.glb" -> R.drawable.ceiling_lamp
+        "Ceiling Light (1).glb" -> R.drawable.ceiling_light__1_
+        "Ceiling Light.glb" -> R.drawable.ceiling_light
+        "Floor Tile.glb" -> R.drawable.floor_tile
+        "Picnic Basket.glb" -> R.drawable.picnic_basket
+        "Wall dsk speaker.glb" -> R.drawable.wall_desk_speakers
         else -> R.drawable.profile // A default fallback image
     }
 }
+
+
