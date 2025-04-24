@@ -319,7 +319,7 @@ fun ARDepthEstimationScreen(
                             selectedModel?.let {
                                 loadModelGlbAsync(
                                     glbFileLocation = it,
-                                    scaleToUnits = 0.3f,
+                                    scaleToUnits = 0.6f,
                                     onLoaded = {
                                         Log.d(TAG, "✅ Model loaded successfully: $selectedModel")
 
