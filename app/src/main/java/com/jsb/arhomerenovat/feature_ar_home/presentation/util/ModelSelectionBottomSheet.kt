@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -132,11 +133,14 @@ fun ModelSelectionBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("Select a 3D Model", style = MaterialTheme.typography.headlineSmall)
-            Spacer(modifier = Modifier.height(12.dp))
+        LazyColumn(modifier = Modifier.padding(16.dp)) {
+            item {
+                Text("Select a 3D Model", style = MaterialTheme.typography.headlineSmall)
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
-            models.forEach { model ->
+            items(models.size) { index ->
+                val model = models[index]
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -146,8 +150,8 @@ fun ModelSelectionBottomSheet(
                     Icon(
                         painter = painterResource(id = model.imageResId),
                         contentDescription = model.modelFileName,
-                        modifier = Modifier.size(40.dp)
-                            .clickable { onModelSelected(model.modelFileName)}
+                        modifier = Modifier
+                            .size(40.dp)
                             .align(Alignment.Center)
                     )
                 }
