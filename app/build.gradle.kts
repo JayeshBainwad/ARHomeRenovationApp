@@ -1,9 +1,15 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.compose.compiler)
+}
+
+val localProperties = Properties().apply {
+    load(rootProject.file("local.properties").inputStream())
 }
 
 android {
@@ -21,6 +27,13 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        manifestPlaceholders.putAll(
+            mapOf(
+                "AR_API_KEY" to (localProperties["AR_API_KEY"] as String),
+                "GEO_API_KEY" to (localProperties["GEO_API_KEY"] as String)
+            )
+        )
     }
 
     buildTypes {

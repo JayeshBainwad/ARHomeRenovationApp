@@ -57,12 +57,15 @@
             android:name="com.google.ar.core"
             android:value="required"
             tools:replace="android:value" />
+        <!-- AR API Key -->
         <meta-data
             android:name="com.google.android.ar.API_KEY"
-            android:value="REMOVED_API_KEY"/>
+            android:value="${AR_API_KEY}" />
+
+        <!-- GEO API Key -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="REMOVED_API_KEY"/>
+            android:value="${GEO_API_KEY}" />
     </application>
 
 </manifest>

@@ -10,7 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
+// For now not in use
 class FrameAnalyser(
     private val depthEstimationModel: MiDASModel,
     private val onDepthMapComputed: (Bitmap) -> Unit

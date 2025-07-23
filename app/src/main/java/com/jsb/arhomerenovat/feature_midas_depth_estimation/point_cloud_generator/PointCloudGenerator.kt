@@ -1,7 +1,7 @@
 package com.jsb.arhomerenovat.feature_midas_depth_estimation.point_cloud_generator
 
 import android.graphics.Bitmap
-
+// For now not in use
 class PointCloudGenerator(
     private val fx: Float, // Focal length in x-direction
     private val fy: Float, // Focal length in y-direction

@@ -13,7 +13,6 @@ import com.jsb.arhomerenovat.feature_ar_home.domain.repository.ModelRepository
 import com.jsb.arhomerenovat.feature_midas_depth_estimation.data.IntrinsicParameters
 import com.jsb.arhomerenovat.feature_midas_depth_estimation.data.MiDASModel
 import com.jsb.arhomerenovat.feature_midas_depth_estimation.data.Point3D
-import com.jsb.arhomerenovat.feature_midas_depth_estimation.point_cloud_generator.PointCloudGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.sceneview.ar.ArSceneView
@@ -30,7 +29,6 @@ private const val TAG = "ARDepthScreen"
 class ARDepthEstimationViewModel @Inject constructor(
     private val repository: ModelRepository,
     private val miDASModel: MiDASModel,
-    private val pointCloudGenerator: PointCloudGenerator,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
