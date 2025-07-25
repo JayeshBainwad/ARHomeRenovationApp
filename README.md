@@ -110,7 +110,7 @@ Each feature module follows Clean Architecture (data → domain → presentation
 3. **Build & run**
     - In Android Studio:
         
-        **Build** ▶ **Make Project**, then **Run** on a compatible AR‑capable device.
+        **Build** --> **Make Project**, then **Run** on a compatible AR‑capable device.
         
 
 ---
@@ -122,7 +122,7 @@ Each feature module follows Clean Architecture (data → domain → presentation
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the **Apache License 2.0** — see the [LICENSE](./LICENSE) file for details.
 
