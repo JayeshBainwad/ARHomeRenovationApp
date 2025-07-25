@@ -1,4 +1,4 @@
-**AR Home Renovation App**
+	## AR Home Renovation App	##
 
 *An Android application demonstrating ARCore integration with both SceneView and native ARCore, plus depth visualization via MiDaS*
 
