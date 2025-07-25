@@ -87,7 +87,7 @@ Each feature module follows Clean Architecture (data → domain → presentation
 
 ---
 
-## ⚙Getting Started
+## Getting Started
 
 1. **Clone the repo**
     
